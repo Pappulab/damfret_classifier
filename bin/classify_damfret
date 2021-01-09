@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+import os
+import pandas as pd
+
+
+# genes_table = pd.read_csv(constructs_filename, sep='\\s+')
+# s20 = set(genes_table[genes_table['counts'] <= 20000]['construct'].to_numpy().tolist())
+# for construct in s20:
+#     genes_table.drop(genes_table[genes_table['construct'] == construct].index, inplace=True)
+
+# # for RLM1 (8 constructs; remove the last 4)
+# for well in 'P19,P20,P21,P22'.split(','):
+#     genes_table.drop(genes_table[genes_table['well_file'] == well].index, inplace=True)
+
+# # genes_table = genes_table[genes_table['gene'] == 'RBS1'].dropna()
