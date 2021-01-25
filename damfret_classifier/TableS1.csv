@@ -1,0 +1,406 @@
+Concentration,Generating-Function,Replicate,Saturation,Noise-Profile,Classification,Confidence-Score
+01,3 State,1,High,Noise 1,Two-state continuous transition (red),0.62154629712783
+01,3 State,2,High,Noise 1,Higher order state transition (magenta),0.30211664921292714
+01,3 State,3,High,Noise 1,Higher order state transition (magenta),0.38478565558955047
+01,3 State,1,High,Noise 2,Higher order state transition (magenta),0.2740628268917471
+01,3 State,2,High,Noise 2,Higher order state transition (magenta),0.10893315553669146
+01,3 State,3,High,Noise 2,Higher order state transition (magenta),0.23650918963347803
+01,3 State,1,High,Noise 3,Higher order state transition (magenta),0.15718080955355485
+01,3 State,2,High,Noise 3,Higher order state transition (magenta),0.12195929889917405
+01,3 State,3,High,Noise 3,Higher order state transition (magenta),0.25038911986094453
+02,3 State,1,High,Noise 1,Two-state continuous transition (red),0.536798165747369
+02,3 State,2,High,Noise 1,Higher order state transition (magenta),0.4914900393567704
+02,3 State,3,High,Noise 1,Higher order state transition (magenta),0.655625222567561
+02,3 State,1,High,Noise 2,Higher order state transition (magenta),0.6239629048338754
+02,3 State,2,High,Noise 2,Higher order state transition (magenta),0.5087998213759387
+02,3 State,3,High,Noise 2,Higher order state transition (magenta),0.4270506018128577
+02,3 State,1,High,Noise 3,Higher order state transition (magenta),0.21551225501777682
+02,3 State,2,High,Noise 3,Higher order state transition (magenta),0.15305810847881934
+02,3 State,3,High,Noise 3,Higher order state transition (magenta),0.06995694529550373
+04,3 State,1,High,Noise 1,Higher order state transition (magenta),0.6225940097705468
+04,3 State,2,High,Noise 1,Higher order state transition (magenta),0.702501889243009
+04,3 State,3,High,Noise 1,Higher order state transition (magenta),0.702644884309741
+04,3 State,1,High,Noise 2,Higher order state transition (magenta),0.6173125713951063
+04,3 State,2,High,Noise 2,Higher order state transition (magenta),0.4931730582198962
+04,3 State,3,High,Noise 2,Higher order state transition (magenta),0.6044763746514294
+04,3 State,1,High,Noise 3,Higher order state transition (magenta),0.32024195997378796
+04,3 State,2,High,Noise 3,Higher order state transition (magenta),0.30143420948624017
+04,3 State,3,High,Noise 3,Higher order state transition (magenta),0.10474021061640221
+04,3 State,1,Low,Noise 1,Higher order state transition (magenta),0.6423127150041804
+04,3 State,2,Low,Noise 1,Higher order state transition (magenta),0.6587690678917182
+04,3 State,3,Low,Noise 1,Higher order state transition (magenta),0.6988150355556585
+04,3 State,1,Low,Noise 2,Higher order state transition (magenta),0.5770483520187655
+04,3 State,2,Low,Noise 2,Higher order state transition (magenta),0.6194349310677921
+04,3 State,3,Low,Noise 2,Higher order state transition (magenta),0.6190536865355447
+04,3 State,1,Low,Noise 3,Higher order state transition (magenta),0.3030531401206374
+04,3 State,2,Low,Noise 3,Higher order state transition (magenta),0.38977822594119665
+04,3 State,3,Low,Noise 3,Higher order state transition (magenta),0.3462461924190316
+04,3 State,1,Uniform 1,Noise 1,Higher order state transition (magenta),0.6530626013802173
+04,3 State,2,Uniform 1,Noise 1,Higher order state transition (magenta),0.6387865547737123
+04,3 State,3,Uniform 1,Noise 1,Higher order state transition (magenta),0.7006422252792268
+04,3 State,1,Uniform 1,Noise 2,Higher order state transition (magenta),0.638100922728787
+04,3 State,2,Uniform 1,Noise 2,Higher order state transition (magenta),0.6480852856938526
+04,3 State,3,Uniform 1,Noise 2,Higher order state transition (magenta),0.6065465903548725
+04,3 State,1,Uniform 1,Noise 3,Higher order state transition (magenta),0.32072769933223555
+04,3 State,2,Uniform 1,Noise 3,Higher order state transition (magenta),0.3090227281215241
+04,3 State,3,Uniform 1,Noise 3,Higher order state transition (magenta),0.2998693246857978
+06,3 State,1,High,Noise 1,Higher order state transition (magenta),0.6719439848153343
+06,3 State,2,High,Noise 1,Higher order state transition (magenta),0.6810963639429953
+06,3 State,3,High,Noise 1,Higher order state transition (magenta),0.6556123710527281
+06,3 State,1,High,Noise 2,Higher order state transition (magenta),0.7313090407812686
+06,3 State,2,High,Noise 2,Higher order state transition (magenta),0.6266817376223788
+06,3 State,3,High,Noise 2,Higher order state transition (magenta),0.6567630005845767
+06,3 State,1,High,Noise 3,Higher order state transition (magenta),0.4802779185303038
+06,3 State,2,High,Noise 3,Higher order state transition (magenta),0.4568498302836621
+06,3 State,3,High,Noise 3,Higher order state transition (magenta),0.5350736972841166
+06,3 State,1,Low,Noise 1,Higher order state transition (magenta),0.6661240743072283
+06,3 State,2,Low,Noise 1,Higher order state transition (magenta),0.6791634302536437
+06,3 State,3,Low,Noise 1,Higher order state transition (magenta),0.6356553966808026
+06,3 State,1,Low,Noise 2,Higher order state transition (magenta),0.6955054218507062
+06,3 State,2,Low,Noise 2,Higher order state transition (magenta),0.73701384055286
+06,3 State,3,Low,Noise 2,Higher order state transition (magenta),0.48991802596291323
+06,3 State,1,Low,Noise 3,Higher order state transition (magenta),0.4581972133769041
+06,3 State,2,Low,Noise 3,Higher order state transition (magenta),0.4258998853958221
+06,3 State,3,Low,Noise 3,Higher order state transition (magenta),0.3915143759014983
+06,3 State,1,Uniform 1,Noise 1,Higher order state transition (magenta),0.693315879184061
+06,3 State,2,Uniform 1,Noise 1,Higher order state transition (magenta),0.6539829937373803
+06,3 State,3,Uniform 1,Noise 1,Higher order state transition (magenta),0.6778535210902542
+06,3 State,1,Uniform 1,Noise 2,Higher order state transition (magenta),0.7157608042965213
+06,3 State,2,Uniform 1,Noise 2,Higher order state transition (magenta),0.7003924800371053
+06,3 State,3,Uniform 1,Noise 2,Higher order state transition (magenta),0.5648282721592379
+06,3 State,1,Uniform 1,Noise 3,Higher order state transition (magenta),0.47930300408363935
+06,3 State,2,Uniform 1,Noise 3,Higher order state transition (magenta),0.49787180499455297
+06,3 State,3,Uniform 1,Noise 3,Higher order state transition (magenta),0.4484301461334897
+08,3 State,1,High,Noise 1,Higher order state transition (magenta),0.13215276401575743
+08,3 State,2,High,Noise 1,Higher order state transition (magenta),0.3301934374585949
+08,3 State,3,High,Noise 1,Higher order state transition (magenta),0.029541695315308814
+08,3 State,1,High,Noise 2,Higher order state transition (magenta),0.08169200279810607
+08,3 State,2,High,Noise 2,Higher order state transition (magenta),0.2785679733347976
+08,3 State,3,High,Noise 2,Two-state discontinuous transition (green),0.011777581741435433
+08,3 State,1,High,Noise 3,Higher order state transition (magenta),0.4595714770878506
+08,3 State,2,High,Noise 3,Higher order state transition (magenta),0.2698878383878464
+08,3 State,3,High,Noise 3,Higher order state transition (magenta),0.19065190741759608
+08,3 State,1,Low,Noise 1,Higher order state transition (magenta),0.13277448010168752
+08,3 State,2,Low,Noise 1,Higher order state transition (magenta),0.029425072411167763
+08,3 State,3,Low,Noise 1,Higher order state transition (magenta),0.24877534496665937
+08,3 State,1,Low,Noise 2,Higher order state transition (magenta),0.6752528413880007
+08,3 State,2,Low,Noise 2,Higher order state transition (magenta),0.5603026609778463
+08,3 State,3,Low,Noise 2,Higher order state transition (magenta),0.7447418167739317
+08,3 State,1,Low,Noise 3,Higher order state transition (magenta),0.5154009881423751
+08,3 State,2,Low,Noise 3,Higher order state transition (magenta),0.6165102315764606
+08,3 State,3,Low,Noise 3,Higher order state transition (magenta),0.4168823080225978
+08,3 State,1,Uniform 1,Noise 1,Higher order state transition (magenta),0.24361551099273543
+08,3 State,2,Uniform 1,Noise 1,Higher order state transition (magenta),0.32794171615114054
+08,3 State,3,Uniform 1,Noise 1,Higher order state transition (magenta),0.1092434123090738
+08,3 State,1,Uniform 1,Noise 2,Higher order state transition (magenta),0.1723074238963615
+08,3 State,2,Uniform 1,Noise 2,Higher order state transition (magenta),0.4523786147589695
+08,3 State,3,Uniform 1,Noise 2,Higher order state transition (magenta),0.6067308322337833
+08,3 State,1,Uniform 1,Noise 3,Higher order state transition (magenta),0.41281328934590605
+08,3 State,2,Uniform 1,Noise 3,Higher order state transition (magenta),0.29256915831047614
+08,3 State,3,Uniform 1,Noise 3,Higher order state transition (magenta),0.3419730912510155
+10,3 State,1,Uniform 2,Noise 1,Two-state discontinuous transition (green),0.1608749276751013
+10,3 State,2,Uniform 2,Noise 1,Two-state discontinuous transition (green),0.4191197974633678
+10,3 State,3,Uniform 2,Noise 1,Two-state discontinuous transition (green),0.4581477715501816
+10,3 State,1,Uniform 2,Noise 2,Higher order state transition (magenta),0.5582258402609835
+10,3 State,2,Uniform 2,Noise 2,Higher order state transition (magenta),0.05092992545968428
+10,3 State,3,Uniform 2,Noise 2,Higher order state transition (magenta),0.5188432574636089
+10,3 State,1,Uniform 2,Noise 3,Two-state discontinuous transition (green),0.1004308567046025
+10,3 State,2,Uniform 2,Noise 3,Higher order state transition (magenta),0.24085623835568143
+10,3 State,3,Uniform 2,Noise 3,Two-state discontinuous transition (green),0.12022921725408772
+12,3 State,1,Uniform 2,Noise 1,Two-state discontinuous transition (green),0.5302314464831143
+12,3 State,2,Uniform 2,Noise 1,Two-state discontinuous transition (green),0.6496739539140095
+12,3 State,3,Uniform 2,Noise 1,Two-state discontinuous transition (green),0.5034270685165704
+12,3 State,1,Uniform 2,Noise 2,Higher order state transition (magenta),0.34328704421362183
+12,3 State,2,Uniform 2,Noise 2,Two-state discontinuous transition (green),0.14239628431762463
+12,3 State,3,Uniform 2,Noise 2,Higher order state transition (magenta),0.2464892121940962
+12,3 State,1,Uniform 2,Noise 3,Two-state discontinuous transition (green),0.11962926629415137
+12,3 State,2,Uniform 2,Noise 3,Two-state discontinuous transition (green),0.20366426144671435
+12,3 State,3,Uniform 2,Noise 3,Two-state discontinuous transition (green),0.20369095979952606
+01,Sigmoid,1,High,Noise 1,Assembled at all expression levels (black),0.9999983715539542
+01,Sigmoid,2,High,Noise 1,Assembled at all expression levels (black),0.9999972405913795
+01,Sigmoid,3,High,Noise 1,Assembled at all expression levels (black),0.9996793536425832
+01,Sigmoid,1,High,Noise 2,Assembled at all expression levels (black),0.9972607705249561
+01,Sigmoid,2,High,Noise 2,Assembled at all expression levels (black),0.9948994327782115
+01,Sigmoid,3,High,Noise 2,Assembled at all expression levels (black),0.9976668608987895
+01,Sigmoid,1,High,Noise 3,Assembled at all expression levels (black),0.9783602181509978
+01,Sigmoid,2,High,Noise 3,Assembled at all expression levels (black),0.9566752060666974
+01,Sigmoid,3,High,Noise 3,Assembled at all expression levels (black),0.925109591028578
+02,Sigmoid,1,High,Noise 1,Assembled at all expression levels (black),0.9999903292942371
+02,Sigmoid,2,High,Noise 1,Assembled at all expression levels (black),1.0
+02,Sigmoid,3,High,Noise 1,Assembled at all expression levels (black),0.99997874090233
+02,Sigmoid,1,High,Noise 2,Assembled at all expression levels (black),0.999995995717379
+02,Sigmoid,2,High,Noise 2,Assembled at all expression levels (black),0.9931006411887269
+02,Sigmoid,3,High,Noise 2,Assembled at all expression levels (black),0.9893978426484276
+02,Sigmoid,1,High,Noise 3,Assembled at all expression levels (black),0.9602601490255194
+02,Sigmoid,2,High,Noise 3,Assembled at all expression levels (black),0.9585624079146562
+02,Sigmoid,3,High,Noise 3,Assembled at all expression levels (black),0.9174989295824012
+02,Sigmoid,1,Low,Noise 1,Assembled at all expression levels (black),0.9999972816463278
+02,Sigmoid,2,Low,Noise 1,Assembled at all expression levels (black),0.9999994753405053
+02,Sigmoid,3,Low,Noise 1,Assembled at all expression levels (black),1.0
+02,Sigmoid,1,Low,Noise 2,Assembled at all expression levels (black),0.9954772405760739
+02,Sigmoid,2,Low,Noise 2,Assembled at all expression levels (black),0.9961872902644799
+02,Sigmoid,3,Low,Noise 2,Assembled at all expression levels (black),0.9865965287202507
+02,Sigmoid,1,Low,Noise 3,Assembled at all expression levels (black),0.94058480614322
+02,Sigmoid,2,Low,Noise 3,Assembled at all expression levels (black),0.9767546805849128
+02,Sigmoid,3,Low,Noise 3,Assembled at all expression levels (black),0.9652870954655315
+04,Sigmoid,1,High,Noise 1,Two-state continuous transition (red),0.5828683428658499
+04,Sigmoid,2,High,Noise 1,Two-state continuous transition (red),0.5748904120770745
+04,Sigmoid,3,High,Noise 1,Two-state continuous transition (red),0.6238440236886489
+04,Sigmoid,1,High,Noise 2,Two-state continuous transition (red),0.08862500464378717
+04,Sigmoid,2,High,Noise 2,Two-state continuous transition (red),0.06360410213296697
+04,Sigmoid,3,High,Noise 2,Two-state continuous transition (red),0.07586058510192006
+04,Sigmoid,1,High,Noise 3,Two-state discontinuous transition (green),0.32895710096484926
+04,Sigmoid,2,High,Noise 3,Two-state discontinuous transition (green),0.310250335775861
+04,Sigmoid,3,High,Noise 3,Two-state discontinuous transition (green),0.34849485102082883
+04,Sigmoid,1,Low,Noise 1,Two-state continuous transition (red),0.587798944426593
+04,Sigmoid,2,Low,Noise 1,Two-state continuous transition (red),0.5790762370374085
+04,Sigmoid,3,Low,Noise 1,Two-state continuous transition (red),0.5782764174539761
+04,Sigmoid,1,Low,Noise 2,Two-state continuous transition (red),0.06630320768624429
+04,Sigmoid,2,Low,Noise 2,Two-state continuous transition (red),0.08140717666175228
+04,Sigmoid,3,Low,Noise 2,Two-state continuous transition (red),0.022275617975705174
+04,Sigmoid,1,Low,Noise 3,Two-state discontinuous transition (green),0.4002089987763488
+04,Sigmoid,2,Low,Noise 3,Two-state discontinuous transition (green),0.3201553190338788
+04,Sigmoid,3,Low,Noise 3,Two-state discontinuous transition (green),0.3686971892139945
+04,Sigmoid,1,Uniform 1,Noise 1,Two-state continuous transition (red),0.5493744312529636
+04,Sigmoid,2,Uniform 1,Noise 1,Two-state continuous transition (red),0.61178587887557
+04,Sigmoid,3,Uniform 1,Noise 1,Two-state continuous transition (red),0.6226901835262948
+04,Sigmoid,1,Uniform 1,Noise 2,Two-state continuous transition (red),0.09530861312013787
+04,Sigmoid,2,Uniform 1,Noise 2,Two-state continuous transition (red),0.06950918179744137
+04,Sigmoid,3,Uniform 1,Noise 2,Two-state continuous transition (red),0.06233078774776968
+04,Sigmoid,1,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.37395395277279614
+04,Sigmoid,2,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.317739537097628
+04,Sigmoid,3,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.34960128160828413
+06,Sigmoid,1,High,Noise 1,Two-state continuous transition (red),0.6650290426701388
+06,Sigmoid,2,High,Noise 1,Two-state continuous transition (red),0.6773241150493314
+06,Sigmoid,3,High,Noise 1,Two-state continuous transition (red),0.7007409391083297
+06,Sigmoid,1,High,Noise 2,Two-state continuous transition (red),0.36453000522841655
+06,Sigmoid,2,High,Noise 2,Two-state continuous transition (red),0.35235017939451757
+06,Sigmoid,3,High,Noise 2,Two-state continuous transition (red),0.41573826611046916
+06,Sigmoid,1,High,Noise 3,Two-state continuous transition (red),0.051451549791106485
+06,Sigmoid,2,High,Noise 3,Two-state discontinuous transition (green),0.016909709182470756
+06,Sigmoid,3,High,Noise 3,Two-state continuous transition (red),0.021138212480252827
+06,Sigmoid,1,Low,Noise 1,Two-state continuous transition (red),0.6767615319565387
+06,Sigmoid,2,Low,Noise 1,Two-state continuous transition (red),0.6758549140700373
+06,Sigmoid,3,Low,Noise 1,Two-state continuous transition (red),0.6697533049754708
+06,Sigmoid,1,Low,Noise 2,Two-state continuous transition (red),0.39620951741745924
+06,Sigmoid,2,Low,Noise 2,Two-state continuous transition (red),0.40538438057810694
+06,Sigmoid,3,Low,Noise 2,Two-state continuous transition (red),0.39703949327895116
+06,Sigmoid,1,Low,Noise 3,Two-state continuous transition (red),0.05224610344587692
+06,Sigmoid,2,Low,Noise 3,Two-state continuous transition (red),0.02819289881808129
+06,Sigmoid,3,Low,Noise 3,Two-state continuous transition (red),0.027993436097835483
+06,Sigmoid,1,Uniform 1,Noise 1,Two-state continuous transition (red),0.6719267749304225
+06,Sigmoid,2,Uniform 1,Noise 1,Two-state continuous transition (red),0.6908817239049433
+06,Sigmoid,3,Uniform 1,Noise 1,Two-state continuous transition (red),0.6769929340647052
+06,Sigmoid,1,Uniform 1,Noise 2,Two-state continuous transition (red),0.38253857557429827
+06,Sigmoid,2,Uniform 1,Noise 2,Two-state continuous transition (red),0.46002402192539965
+06,Sigmoid,3,Uniform 1,Noise 2,Two-state continuous transition (red),0.3821176921902447
+06,Sigmoid,1,Uniform 1,Noise 3,Two-state continuous transition (red),0.10085284014000921
+06,Sigmoid,2,Uniform 1,Noise 3,Two-state continuous transition (red),0.02367380227366082
+06,Sigmoid,3,Uniform 1,Noise 3,Two-state continuous transition (red),0.08452621831006812
+08,Sigmoid,1,High,Noise 1,Two-state continuous transition (red),0.6824861224869816
+08,Sigmoid,2,High,Noise 1,Two-state continuous transition (red),0.6771429703909637
+08,Sigmoid,3,High,Noise 1,Two-state continuous transition (red),0.6370414780981475
+08,Sigmoid,1,High,Noise 2,Two-state continuous transition (red),0.4654392020724755
+08,Sigmoid,2,High,Noise 2,Two-state continuous transition (red),0.43631336629317585
+08,Sigmoid,3,High,Noise 2,Two-state continuous transition (red),0.44020103608158856
+08,Sigmoid,1,High,Noise 3,Two-state continuous transition (red),0.28348170001240125
+08,Sigmoid,2,High,Noise 3,Two-state continuous transition (red),0.23495563370948344
+08,Sigmoid,3,High,Noise 3,Two-state continuous transition (red),0.2146762623646707
+08,Sigmoid,1,Low,Noise 1,Two-state continuous transition (red),0.6680713079732536
+08,Sigmoid,2,Low,Noise 1,Two-state continuous transition (red),0.6463346685815263
+08,Sigmoid,3,Low,Noise 1,Two-state continuous transition (red),0.6434089290881403
+08,Sigmoid,1,Low,Noise 2,Two-state continuous transition (red),0.4661108251167334
+08,Sigmoid,2,Low,Noise 2,Two-state continuous transition (red),0.411876373337392
+08,Sigmoid,3,Low,Noise 2,Two-state continuous transition (red),0.47138586681241307
+08,Sigmoid,1,Low,Noise 3,Two-state continuous transition (red),0.2232260221586102
+08,Sigmoid,2,Low,Noise 3,Two-state continuous transition (red),0.16934607737550697
+08,Sigmoid,3,Low,Noise 3,Two-state continuous transition (red),0.1887558480035349
+08,Sigmoid,1,Uniform 1,Noise 1,Two-state continuous transition (red),0.640100535383552
+08,Sigmoid,2,Uniform 1,Noise 1,Two-state continuous transition (red),0.6423203956694531
+08,Sigmoid,3,Uniform 1,Noise 1,Two-state continuous transition (red),0.6466992131275447
+08,Sigmoid,1,Uniform 1,Noise 2,Two-state continuous transition (red),0.44668649740715605
+08,Sigmoid,2,Uniform 1,Noise 2,Two-state continuous transition (red),0.4682823174207777
+08,Sigmoid,3,Uniform 1,Noise 2,Two-state continuous transition (red),0.44611858295962814
+08,Sigmoid,1,Uniform 1,Noise 3,Two-state continuous transition (red),0.3006050503306653
+08,Sigmoid,2,Uniform 1,Noise 3,Two-state continuous transition (red),0.1977027484818139
+08,Sigmoid,3,Uniform 1,Noise 3,Two-state continuous transition (red),0.15669772373312316
+10,Sigmoid,1,High,Noise 1,Higher order state transition (magenta),0.06595900046808614
+10,Sigmoid,2,High,Noise 1,Two-state continuous transition (red),0.2485738929449599
+10,Sigmoid,3,High,Noise 1,Two-state continuous transition (red),0.21258032764002288
+10,Sigmoid,1,High,Noise 2,Higher order state transition (magenta),0.028058994763796863
+10,Sigmoid,2,High,Noise 2,Higher order state transition (magenta),0.023594232971347606
+10,Sigmoid,3,High,Noise 2,Higher order state transition (magenta),0.12714825058090157
+10,Sigmoid,1,High,Noise 3,Higher order state transition (magenta),0.23705036888777647
+10,Sigmoid,2,High,Noise 3,Two-state discontinuous transition (green),0.10442977273223908
+10,Sigmoid,3,High,Noise 3,Higher order state transition (magenta),0.02170159215442835
+10,Sigmoid,1,Low,Noise 1,Two-state continuous transition (red),0.261795610295719
+10,Sigmoid,2,Low,Noise 1,Two-state continuous transition (red),0.24396246265881033
+10,Sigmoid,3,Low,Noise 1,Two-state continuous transition (red),0.17012690074085124
+10,Sigmoid,1,Low,Noise 2,Higher order state transition (magenta),0.10457811624555835
+10,Sigmoid,2,Low,Noise 2,Higher order state transition (magenta),0.008484241197372067
+10,Sigmoid,3,Low,Noise 2,Higher order state transition (magenta),0.05580064023144787
+10,Sigmoid,1,Low,Noise 3,Higher order state transition (magenta),0.22321740192412537
+10,Sigmoid,2,Low,Noise 3,Higher order state transition (magenta),0.05501163934606451
+10,Sigmoid,3,Low,Noise 3,Higher order state transition (magenta),0.009368404944371245
+10,Sigmoid,1,Uniform 2,Noise 1,Two-state continuous transition (red),0.22395251715938186
+10,Sigmoid,2,Uniform 2,Noise 1,Two-state continuous transition (red),0.24482236296153576
+10,Sigmoid,3,Uniform 2,Noise 1,Two-state continuous transition (red),0.2837812841781262
+10,Sigmoid,1,Uniform 2,Noise 2,Higher order state transition (magenta),0.14233006374857082
+10,Sigmoid,2,Uniform 2,Noise 2,Higher order state transition (magenta),0.05134579363435393
+10,Sigmoid,3,Uniform 2,Noise 2,Higher order state transition (magenta),0.028135457993088975
+10,Sigmoid,1,Uniform 2,Noise 3,Higher order state transition (magenta),0.23879866730975835
+10,Sigmoid,2,Uniform 2,Noise 3,Higher order state transition (magenta),0.11654230462152942
+10,Sigmoid,3,Uniform 2,Noise 3,Higher order state transition (magenta),0.10553670813868737
+12,Sigmoid,1,Uniform 2,Noise 1,Two-state discontinuous transition (green),0.03047074034078414
+12,Sigmoid,2,Uniform 2,Noise 1,No assembly at all expression levels (blue),0.9996366778178475
+12,Sigmoid,3,Uniform 2,Noise 1,No assembly at all expression levels (blue),0.039790012782800754
+12,Sigmoid,1,Uniform 2,Noise 2,No assembly at all expression levels (blue),0.9999418081026151
+12,Sigmoid,2,Uniform 2,Noise 2,No assembly at all expression levels (blue),1.0
+12,Sigmoid,3,Uniform 2,Noise 2,No assembly at all expression levels (blue),0.9998601888355385
+12,Sigmoid,1,Uniform 2,Noise 3,No assembly at all expression levels (blue),0.9969833613640534
+12,Sigmoid,2,Uniform 2,Noise 3,No assembly at all expression levels (blue),1.0
+12,Sigmoid,3,Uniform 2,Noise 3,No assembly at all expression levels (blue),0.9994662136379121
+01,Step,1,High,Noise 1,Assembled at all expression levels (black),0.9996863770654509
+01,Step,2,High,Noise 1,Assembled at all expression levels (black),0.9999824341280508
+01,Step,3,High,Noise 1,Assembled at all expression levels (black),0.9996825316361204
+01,Step,1,High,Noise 2,Assembled at all expression levels (black),0.9978531979976937
+01,Step,2,High,Noise 2,Assembled at all expression levels (black),0.9999967251858257
+01,Step,3,High,Noise 2,Assembled at all expression levels (black),0.9999885654072695
+01,Step,1,High,Noise 3,Assembled at all expression levels (black),0.9438695840875613
+01,Step,2,High,Noise 3,Assembled at all expression levels (black),0.9830984456753469
+01,Step,3,High,Noise 3,Assembled at all expression levels (black),0.9936090522399434
+02,Step,1,High,Noise 1,Assembled at all expression levels (black),0.9996835509431303
+02,Step,2,High,Noise 1,Assembled at all expression levels (black),0.9996845481159558
+02,Step,3,High,Noise 1,Assembled at all expression levels (black),0.9996869286797785
+02,Step,1,High,Noise 2,Assembled at all expression levels (black),0.9999898524504982
+02,Step,2,High,Noise 2,Assembled at all expression levels (black),0.9961387873737717
+02,Step,3,High,Noise 2,Assembled at all expression levels (black),0.9995804083943785
+02,Step,1,High,Noise 3,Assembled at all expression levels (black),0.9802087002988638
+02,Step,2,High,Noise 3,Assembled at all expression levels (black),0.9851680834195455
+02,Step,3,High,Noise 3,Assembled at all expression levels (black),0.9771555563402115
+02,Step,1,Low,Noise 1,Assembled at all expression levels (black),0.9996856317922223
+02,Step,2,Low,Noise 1,Assembled at all expression levels (black),0.9996837189001608
+02,Step,3,Low,Noise 1,Assembled at all expression levels (black),0.9996847205297901
+02,Step,1,Low,Noise 2,Assembled at all expression levels (black),0.99410522427299
+02,Step,2,Low,Noise 2,Assembled at all expression levels (black),0.9959325602979598
+02,Step,3,Low,Noise 2,Assembled at all expression levels (black),0.9997321227769054
+02,Step,1,Low,Noise 3,Assembled at all expression levels (black),0.9857904224777527
+02,Step,2,Low,Noise 3,Assembled at all expression levels (black),0.9759047440796444
+02,Step,3,Low,Noise 3,Assembled at all expression levels (black),0.988926187128454
+04,Step,1,High,Noise 1,Two-state discontinuous transition (green),0.5274390082454339
+04,Step,2,High,Noise 1,Two-state discontinuous transition (green),0.5491405392669002
+04,Step,3,High,Noise 1,Two-state discontinuous transition (green),0.5352654359983633
+04,Step,1,High,Noise 2,Two-state discontinuous transition (green),0.8196316294869024
+04,Step,2,High,Noise 2,Two-state discontinuous transition (green),0.7380423725574585
+04,Step,3,High,Noise 2,Two-state discontinuous transition (green),0.8420441139911302
+04,Step,1,High,Noise 3,Two-state discontinuous transition (green),0.6393169455350483
+04,Step,2,High,Noise 3,Two-state discontinuous transition (green),0.6173995250445182
+04,Step,3,High,Noise 3,Two-state discontinuous transition (green),0.9110708315232607
+04,Step,1,Low,Noise 1,Two-state discontinuous transition (green),0.5400135282435988
+04,Step,2,Low,Noise 1,Two-state discontinuous transition (green),0.5262544571871564
+04,Step,3,Low,Noise 1,Two-state discontinuous transition (green),0.5124211781645571
+04,Step,1,Low,Noise 2,Two-state discontinuous transition (green),0.8717834881848047
+04,Step,2,Low,Noise 2,Two-state discontinuous transition (green),0.8411388113064602
+04,Step,3,Low,Noise 2,Two-state discontinuous transition (green),0.8077655263432995
+04,Step,1,Low,Noise 3,Two-state discontinuous transition (green),0.37311983864518306
+04,Step,2,Low,Noise 3,Two-state discontinuous transition (green),0.6245640950116512
+04,Step,3,Low,Noise 3,Two-state discontinuous transition (green),0.9200828822396669
+04,Step,1,Uniform 1,Noise 1,Two-state discontinuous transition (green),0.5386368328456994
+04,Step,2,Uniform 1,Noise 1,Two-state discontinuous transition (green),0.5145473686651316
+04,Step,3,Uniform 1,Noise 1,Two-state discontinuous transition (green),0.5062735249195796
+04,Step,1,Uniform 1,Noise 2,Two-state discontinuous transition (green),0.8001447636149633
+04,Step,2,Uniform 1,Noise 2,Two-state discontinuous transition (green),0.8044067603039046
+04,Step,3,Uniform 1,Noise 2,Two-state discontinuous transition (green),0.833042910060264
+04,Step,1,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.685380597665755
+04,Step,2,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.869528046248092
+04,Step,3,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.6750825661793857
+06,Step,1,High,Noise 1,Two-state discontinuous transition (green),0.4936200511371516
+06,Step,2,High,Noise 1,Two-state discontinuous transition (green),0.540371851332865
+06,Step,3,High,Noise 1,Two-state discontinuous transition (green),0.5460927846732835
+06,Step,1,High,Noise 2,Two-state discontinuous transition (green),0.8360405873253476
+06,Step,2,High,Noise 2,Two-state discontinuous transition (green),0.8508620998098217
+06,Step,3,High,Noise 2,Two-state discontinuous transition (green),0.833630763510167
+06,Step,1,High,Noise 3,Two-state discontinuous transition (green),0.9402447529410057
+06,Step,2,High,Noise 3,Two-state discontinuous transition (green),0.8965126348126492
+06,Step,3,High,Noise 3,Two-state discontinuous transition (green),0.9214041505033401
+06,Step,1,Low,Noise 1,Two-state discontinuous transition (green),0.5201633346718145
+06,Step,2,Low,Noise 1,Two-state discontinuous transition (green),0.5208700957376783
+06,Step,3,Low,Noise 1,Two-state discontinuous transition (green),0.530269197138932
+06,Step,1,Low,Noise 2,Two-state discontinuous transition (green),0.8470299724345054
+06,Step,2,Low,Noise 2,Two-state discontinuous transition (green),0.8458145746231066
+06,Step,3,Low,Noise 2,Two-state discontinuous transition (green),0.8494165749492912
+06,Step,1,Low,Noise 3,Two-state discontinuous transition (green),0.932093969874907
+06,Step,2,Low,Noise 3,Two-state discontinuous transition (green),0.9112293559696477
+06,Step,3,Low,Noise 3,Two-state discontinuous transition (green),0.9261358585715481
+06,Step,1,Uniform 1,Noise 1,Two-state discontinuous transition (green),0.5034593761600383
+06,Step,2,Uniform 1,Noise 1,Two-state discontinuous transition (green),0.5486635383236002
+06,Step,3,Uniform 1,Noise 1,Two-state discontinuous transition (green),0.5607556777226325
+06,Step,1,Uniform 1,Noise 2,Two-state discontinuous transition (green),0.8451256114163593
+06,Step,2,Uniform 1,Noise 2,Two-state discontinuous transition (green),0.8708155323269392
+06,Step,3,Uniform 1,Noise 2,Two-state discontinuous transition (green),0.8485616109823102
+06,Step,1,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.8690734178919082
+06,Step,2,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.9230825269638737
+06,Step,3,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.9059663962832554
+08,Step,1,High,Noise 1,Two-state discontinuous transition (green),0.5527177394665752
+08,Step,2,High,Noise 1,Two-state discontinuous transition (green),0.5233397739512465
+08,Step,3,High,Noise 1,Two-state discontinuous transition (green),0.5246077281325042
+08,Step,1,High,Noise 2,Two-state discontinuous transition (green),0.8255627396054701
+08,Step,2,High,Noise 2,Two-state discontinuous transition (green),0.8544953202519101
+08,Step,3,High,Noise 2,Two-state discontinuous transition (green),0.8442151623095014
+08,Step,1,High,Noise 3,Two-state discontinuous transition (green),0.916051673809456
+08,Step,2,High,Noise 3,Two-state discontinuous transition (green),0.9080628892630362
+08,Step,3,High,Noise 3,Two-state discontinuous transition (green),0.9093605652125325
+08,Step,1,Low,Noise 1,Two-state discontinuous transition (green),0.5662371731484012
+08,Step,2,Low,Noise 1,Two-state discontinuous transition (green),0.5461895765947458
+08,Step,3,Low,Noise 1,Two-state discontinuous transition (green),0.5307897348911103
+08,Step,1,Low,Noise 2,Two-state discontinuous transition (green),0.8352200534841988
+08,Step,2,Low,Noise 2,Two-state discontinuous transition (green),0.8695491861168422
+08,Step,3,Low,Noise 2,Two-state discontinuous transition (green),0.8711423213728847
+08,Step,1,Low,Noise 3,Two-state discontinuous transition (green),0.9186186736987323
+08,Step,2,Low,Noise 3,Two-state discontinuous transition (green),0.9293648941961582
+08,Step,3,Low,Noise 3,Two-state discontinuous transition (green),0.9387532160785297
+08,Step,1,Uniform 1,Noise 1,Two-state discontinuous transition (green),0.5298593669813786
+08,Step,2,Uniform 1,Noise 1,Two-state discontinuous transition (green),0.6099368414826336
+08,Step,3,Uniform 1,Noise 1,Two-state discontinuous transition (green),0.5613945736750872
+08,Step,1,Uniform 1,Noise 2,Two-state discontinuous transition (green),0.8642442884988463
+08,Step,2,Uniform 1,Noise 2,Two-state discontinuous transition (green),0.8315508795172818
+08,Step,3,Uniform 1,Noise 2,Two-state discontinuous transition (green),0.85308056576133
+08,Step,1,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.8842636055743941
+08,Step,2,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.9008247442153169
+08,Step,3,Uniform 1,Noise 3,Two-state discontinuous transition (green),0.9266580162291668
+10,Step,1,High,Noise 1,Two-state discontinuous transition (green),0.49328683057821177
+10,Step,2,High,Noise 1,Two-state discontinuous transition (green),0.43714086306447103
+10,Step,3,High,Noise 1,Two-state discontinuous transition (green),0.45551349583292905
+10,Step,1,High,Noise 2,Two-state discontinuous transition (green),0.6005099776415032
+10,Step,2,High,Noise 2,Two-state discontinuous transition (green),0.629701930827736
+10,Step,3,High,Noise 2,Two-state discontinuous transition (green),0.7121884495980693
+10,Step,1,High,Noise 3,Two-state discontinuous transition (green),0.40797461885903097
+10,Step,2,High,Noise 3,Two-state discontinuous transition (green),0.44689305717574057
+10,Step,3,High,Noise 3,Two-state discontinuous transition (green),0.40127471897459527
+10,Step,1,Low,Noise 1,Two-state discontinuous transition (green),0.510572122724707
+10,Step,2,Low,Noise 1,Two-state discontinuous transition (green),0.412005750630273
+10,Step,3,Low,Noise 1,Two-state discontinuous transition (green),0.4080506656537603
+10,Step,1,Low,Noise 2,Two-state discontinuous transition (green),0.6283837043013049
+10,Step,2,Low,Noise 2,Two-state discontinuous transition (green),0.5086270302054013
+10,Step,3,Low,Noise 2,Two-state discontinuous transition (green),0.45917313908485086
+10,Step,1,Low,Noise 3,Two-state discontinuous transition (green),0.3999770649257086
+10,Step,2,Low,Noise 3,Two-state discontinuous transition (green),0.3882484094816534
+10,Step,3,Low,Noise 3,Two-state discontinuous transition (green),0.5235746441018111
+10,Step,1,Uniform 2,Noise 1,Two-state discontinuous transition (green),0.5145745954264891
+10,Step,2,Uniform 2,Noise 1,Two-state discontinuous transition (green),0.4440363499940632
+10,Step,3,Uniform 2,Noise 1,Two-state discontinuous transition (green),0.33104399040994104
+10,Step,1,Uniform 2,Noise 2,Two-state discontinuous transition (green),0.5657560136467374
+10,Step,2,Uniform 2,Noise 2,Two-state discontinuous transition (green),0.4454839905904124
+10,Step,3,Uniform 2,Noise 2,Two-state discontinuous transition (green),0.7761501793941097
+10,Step,1,Uniform 2,Noise 3,Two-state discontinuous transition (green),0.46370448556706206
+10,Step,2,Uniform 2,Noise 3,Two-state discontinuous transition (green),0.46251174861423816
+10,Step,3,Uniform 2,Noise 3,Two-state discontinuous transition (green),0.5199520649500378
+12,Step,1,Uniform 2,Noise 1,No assembly at all expression levels (blue),0.999829871118029
+12,Step,2,Uniform 2,Noise 1,No assembly at all expression levels (blue),1.0
+12,Step,3,Uniform 2,Noise 1,No assembly at all expression levels (blue),0.9999142212381821
+12,Step,1,Uniform 2,Noise 2,No assembly at all expression levels (blue),1.0
+12,Step,2,Uniform 2,Noise 2,No assembly at all expression levels (blue),0.9999397644433025
+12,Step,3,Uniform 2,Noise 2,No assembly at all expression levels (blue),1.0
+12,Step,1,Uniform 2,Noise 3,Higher order state transition (magenta),0.004493823248841906
+12,Step,2,Uniform 2,Noise 3,No assembly at all expression levels (blue),1.0
+12,Step,3,Uniform 2,Noise 3,No assembly at all expression levels (blue),1.0

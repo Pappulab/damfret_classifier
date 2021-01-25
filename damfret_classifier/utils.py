@@ -1,16 +1,33 @@
+import os
 import io
 import pkgutil
 import yaml
+import logging
 import numpy as np
 import pandas as pd
 import multiprocessing as mp
+from pathlib import Path
+from tabulate import tabulate
 from datetime import datetime
 from collections import OrderedDict
 from scipy.optimize import curve_fit
 
 
-__all__ = ['load_raw_synthetic_data', 'load_config', 'read_original_data', 'calculate_rsquared', 
-           'start_process', 'initialize_pool', 'parallelize']
+__all__ = ['load_raw_synthetic_data', 'load_manuscript_classifications', 'create_directory_if_not_exist', 'shannon_entropy',
+           'load_settings', 'read_original_data', 'remove_genes_and_replicates_below_count', 'validate_gene_replicates',
+           'create_genes_table', 'start_process', 'initialize_pool', 'parallelize', 'generate_default_config']
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+
+
+# Supremely useful answer to convert a DataFrame to a TSV file: https://stackoverflow.com/a/35974742/866930
+def to_fwf(df, fname):
+    content = tabulate(df.values.tolist(), list(df.columns), tablefmt="plain", floatfmt='.5f')
+    open(fname, 'w').write(content)
+
+
+pd.DataFrame.to_fwf = to_fwf
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -33,20 +50,70 @@ def load_raw_synthetic_data():
     return synthetic_data
 
 
+def load_manuscript_classifications():
+    """This function loads the parameters and classifications posted in the DAmFRET manuscript.
+    Namely, the parameters and classifications in Table S1 and Table S2.
+
+    @return tuple: a 2-tuple comprised of pandas.DataFrame objects corresponding to the SI tables
+                   of Table S1 (synthetic data), and Table S2 (real data) respectively.
+    """
+    synthetic = pkgutil.get_data('damfret_classifier', 'TableS1.csv')
+    real = pkgutil.get_data('damfret_classifier', 'TableS2.csv')
+    synthetic_data = pd.read_csv(io.BytesIO(synthetic))
+    real_data = pd.read_csv(io.BytesIO(real))
+    return synthetic_data, real_data
+
+
+def generate_default_config():
+    """A convenience function to generate a default config."""
+    config_text = pkgutil.get_data('damfret_classifier', 'default_config.yaml')
+    with open('config.yaml', 'w') as cfile:
+        cfile.write(config_text.decode('utf-8'))
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 
 
-def load_config(config_filename):
+def create_directory_if_not_exist(directory):
+    """Create a directory if it does not exist and do not through an error if the `directory` already exists."""
+    path = Path(directory)
+    path.mkdir(parents=True, exist_ok=True)
+    return os.path.isdir(path)
+
+
+
+def shannon_entropy(histogram2d):
+    """Calculate the Shannon Entropy of a 2D numpy array, `histogram2d`. This works by creating a probability distribution
+    from the underlying 2D array and analyzing its Shannon Entropy.
+
+    @param histogram2d (np.ndarray): A 2D array which will be analyzed.
+    @return entropy (float): The Shannon Entropy calculated across the entire array.
+
+    Ref: See this magnificent link: https://stackoverflow.com/questions/42683287/python-numpy-shannon-entropy-array
+    """
+    prob_distribution = histogram2d / histogram2d.sum()
+
+    log_p = np.log(prob_distribution)
+    log_p[log_p == -np.inf] = 0  # remove the infs
+    entropy = -np.sum(prob_distribution * log_p)
+    return entropy
+
+
+def load_settings(yaml_filename):
     """This function loads a YAML configuration file into a dictionary object.
 
-    @param config_filename: The filename of the YAML config file to load.
+    @param yaml_filename: The filename of the YAML config file to load.
     @return dict: a dictionary populated as key / value pairs from the YAML config file.
     """
-    with open(config_filename) as cfile:
-        return yaml.load(cfile)
+    with open(yaml_filename) as yfile:
+        return yaml.safe_load(yfile)
 
 
 def read_original_data(filename, low_conc_cutoff, high_conc_cutoff):
+    """This is a convenience function will provides the user with the ability to load a given 
+    dataset and apply the cutoffs (`low_conc_cutoff` and `high_conc_cutoff`) according to the 
+    algorithm used.
+    """
     data = pd.read_csv(filename, usecols=['Acceptor-A', 'FRET-A'])
     counts = len(data)  # Record the original number of points
     
@@ -63,44 +130,141 @@ def read_original_data(filename, low_conc_cutoff, high_conc_cutoff):
     return df, counts
 
 
-def calculate_rsquared(func, xdata, ydata, p0=None, bounds=None, maxfev=10000):
-    """This is a convenience function which encapsulates the calculation of the `r_squared`
-    value of a function fit to passed `xdata` and `ydata`.
+def remove_genes_and_replicates_below_count(genes_table, minimum_cell_count, construct_or_gene_column):
+    """This is a helper function to prepare an input plasmid list into a table for easier use and
+    management. This function is best paired with `validate_gene_replicates`. That fuction should be
+    run after this.
 
-    @param func:   The function which will be used when fitting and the x and y data.
-                   Note that a `lambda` function is preferable here as subsequent calls
-                   to named functions will reuse previous arguments, a quirk.
-    @param xdata:  The x data of the function which will be fitted.
-    @param ydata:  The y data of the function which will be fitted.
-    @param p0:     A tuple or list containing the initial values which will be used when
-                   evaluating the function.  
-    @param bounds: A tuple or list containing the upper and lower bounds of the parameters
-                   passed to the fitted function, `func`. For e.g. if the input function
-                   requires 2 parameters, the list or tuple passed to `bounds` will contain
-                   2 items, each a list or tuple of size 2.
-    @param maxfev: An integer referring to the number of times the function should be
-                   evaluated. 
+    @param genes_table (pandas.DataFrame):  A table containing the genes, replicates, and well files.
+    @param minimum_cell_count (int):        The minimum number of cell measurements that a data file
+                                            must have in order to be kept.
+    @param construct_or_gene_column (str):  The column to use for selection. Can be either `gene` or
+                                            `construct`.
+    @return tuple:                          A 2-tuple containing the truncated table, and a list 
+                                            containing the genes / constructs that were excluded.
 
-    @return tuple: A 2-tuple comprised of the `popt` and `rsquared` from a fit of the
-                   function data based on the passed parameters.
     """
-    if p0 is not None and bounds is None:
-        popt, _pcov = curve_fit(func, xdata, ydata, p0=p0, maxfev=maxfev)
+    table = genes_table.copy()
+    allowed = 'gene,construct'.split(',')
+    if construct_or_gene_column not in allowed:
+        raise RuntimeError('Column selection "{}" not allowed. Needs to be one of "{}".'.format(construct_or_gene_column, ', '.join(allowed)))
+    search_col = construct_or_gene_column[:]
+
+    df = table[table['counts'] <= minimum_cell_count]
+    to_exclude = set(df[search_col].to_numpy().tolist())
+    for item in to_exclude:
+        match = table[table[search_col] == item]
+        table.drop(match.index, inplace=True)
+    table.reset_index(drop=True, inplace=True)  # Renumber the indices of the rows kept for simplicity.
+    excluded = list(sorted(to_exclude))
+    return table, excluded
+
+
+def validate_gene_replicates(genes_table, num_replicates, drop_extraneous=True):
+    """This is a helper function which is meant to examine a given genes table derived / populated
+    via `create_genes_table` and determine if there are genes which do not have the expected number
+    of replicates. By default extraneous replicates are dropped. Genes with less than the expected
+    number are dropped automatically.
+
+    @param genes_table (pandas.DataFrame):  A table containing the genes, replicates, and well files.
+    @param num_replicates (int):            The number of replicates to validate against.
+    @param drop_extraneous (bool):          Whether or not to drop any replicates exceeding 
+                                            `num_replicates` (default = True).
+    @return pandas.DataFrame:   The truncated `DataFrame`.
+    """
+    table = genes_table.copy()
     
-    elif p0 is not None and bounds is not None:
-        popt, _pcov = curve_fit(func, xdata, ydata, p0=p0, bounds=bounds, maxfev=maxfev)
+    genes = set(table['gene'].to_numpy().tolist())
+    counts = OrderedDict()
+    for gene in sorted(genes):
+        df = table[table['gene'] == gene]
+        if len(df) != num_replicates:
+            counts[gene] = len(df)
 
-    if p0 is None and bounds is None:
-        popt, _pcov = curve_fit(func, xdata, ydata, maxfev=maxfev)
-    elif p0 is None and bounds is not None:
-        popt, _pcov = curve_fit(func, xdata, ydata, bounds=bounds, maxfev=maxfev)
+            if len(df) < num_replicates:
+                table.drop(df.index, inplace=True)
+            else:
+                sel = df.iloc[num_replicates:]
+                table.drop(sel.index, inplace=True)
+    table.reset_index(drop=True, inplace=True)  # Renumber the indices of the rows kept for simplicity.
+    
+    message = list()
+    header1 = 'Warning: The following genes do not match the expected number ({}).'.format(num_replicates)
+    header2 = 'Genes with replicates < {r} were dropped. Genes with replicates > {r} were truncated to {r}:'.format(r=num_replicates)
+    message.append(header1)
+    message.append(header2)
+    for gene in counts:
+        gene_counts = 'GENE: {}, ORIGINAL NUM REPLICATES: {}'.format(gene, counts[gene])
+        message.append(gene_counts)
 
-    residuals = ydata - func(xdata, *popt)
-    ss_res = np.sum(residuals**2.0)
-    ss_tot = np.sum((ydata - np.mean(ydata))**2.0)
-    r_squared = 1.0 - (ss_res / ss_tot)
+    if len(counts) > 0:
+        error_message = '\n'.join(message)
+        print(error_message)
+    return table
 
-    return popt, r_squared
+
+def create_genes_table(config, plasmid_csv_filename, savename):
+    """Given an input plasmid_csv filename and algorithm configuration, create a more comprehensive TSV dataset 
+    for easier use. (TSVs are human and machine-readable.) This works by reading in the plasma well files and
+    counting the number of cell measurements and adding that information to an extended table derived from the
+    plasmid_csv. Other attributes are added such as the construct and replicate numbers. Those numbers should
+    not be used for comparison as they are not fixed. They are mainly used for improving readability and 
+    consulting.
+
+    @param config (Config):             A `Config` instance which contains all the parameters for the project.
+    @param plasmid_csv_filename (str):  A CSV file containing plasmid IDs, genes, sequences, and their well files.
+    @param savename (str):              The name of the output TSV file.
+
+    This function is meant to be run prior to the execution of the driver script which calls the function
+    `classify_datasets`.
+    """
+    expected_columns = 'well_file,plasmid,gene,AA_sequence'.split(',')
+
+    df = pd.read_csv(plasmid_csv_filename)
+    actual_columns = list(df.keys())
+    common = set(actual_columns).intersection(expected_columns)
+    if len(common) != len(expected_columns):
+        raise RuntimeError('Expected columns "{}" not found. Exiting.'.format(', '.join(expected_columns)))
+
+    # reorder plasmid table by sequence length:
+    all_sequences = set(df['AA_sequence'].to_numpy().tolist())
+    seq_lens_genes = list()
+    for seq in all_sequences:
+        gene = df[df['AA_sequence'] == seq]['gene'].to_numpy().tolist()[0]
+        seq_lens_genes.append((seq, gene))
+
+    all_selections = list()
+    construct = 1
+    for sequence, _ in sorted(seq_lens_genes, key=lambda x: (len(x[0]), x[1])):
+        sel = df[df['AA_sequence'] == sequence].copy()
+        replicates  = list()
+        constructs  = list()
+        counts      = list()
+        replicate   = 1
+        for _index, row in sel.iterrows():
+            well_file       = row['well_file']
+            well            = int(well_file[1:])  # works for `A09` and `A9`
+            well_name       = '%s%d' % (well_file[0], well)  # reformat to match CSV data files name format.
+            data_filename   = os.path.join(config.data_dir, config.filename_format.format(well_name=well_name))
+            data            = pd.read_csv(data_filename)
+            cell_counts     = len(data)
+
+            replicates.append(replicate)
+            constructs.append(construct)
+            counts.append(cell_counts)
+            replicate += 1
+        
+        sel['replicate']    = replicates
+        sel['construct']    = constructs
+        sel['counts']       = counts
+
+        all_selections.append(sel)
+        construct += 1
+
+    columns_order = 'construct,replicate,gene,well_file,plasmid,counts,AA_sequence'.split(',')
+    reordered_df = pd.concat(all_selections)
+    reordered_df[columns_order].to_fwf(savename)
+    return reordered_df
 
 
 # ---------------------------------------------------------------------------------------------------------------------

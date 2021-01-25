@@ -1,0 +1,82 @@
+# If no random seed is defined for reproducibility, one will be set
+# and reported to the user.
+random_seed: Null
+
+# This effectively sets the priority of the child process to the lowest.
+# Useful if the number of processes approaches or exceeds the number of
+# processes available to the system as using all the processes by default
+# at its default nice level can overwhelm the system and degrade 
+# performance.
+nice_level: 19
+
+# The number of processes to use when running the analysis. By default, the
+# number of processes used will be 1 to avoid mistakenly allocating system
+# resources. Warning: do not exceed the number of virtual processes otherwise
+# performance will be degraded!
+num_processes: 1
+
+# Parameters to use in the classification of the production data.
+production-data:
+  # The location of the well file data.
+  # Will be checked at runtime. Requires a non-null argument.
+  data_directory: Null
+
+  # The format of the filenames in the data directory. Cannot be null.
+  filename_format: '{well_name}.fcs.csv'
+
+  # The location where the parameters and numpy arrays will be saved.
+  # If `Null`, a default directory called `work` will be created.
+  work_directory: Null
+
+  # The location where all plots will be saved. If `Null`, a directory will
+  # be created in the path where the script was called (i.e. `plots`).
+  plots_directory: Null
+
+  # Exclude genes if any of their replicates have less than this number of
+  # cell measurements. This number is determined by analyzing the Shannon
+  # entropy of the dataset. See the SI of the DAmFRET manuscript for more.
+  drop_cell_counts: 20000
+
+  # These are the limits of the data for the cutoff. This data is excluded 
+  # as data the extrema are noisy.
+  #
+  # Data lower than this value will be excluded.
+  low_conc_cutoff: 1.5
+
+  # Data higher than this value will be excluded. Note: this should match
+  # the limit of `high_conc`.
+  high_conc_cutoff: 5.0
+
+  # Limits for the conc and FRET data. Data outside of these bounds are
+  # excluded.
+  low_conc: 0.0
+  high_conc: 5.0
+  low_fret: -1.0
+  high_fret: 1.0
+
+  # This effectively creates 25 bins within the current FRET range.
+  conc_bin_width: 0.2
+
+  # This effectively creates 100 bins within the current conc range.
+  fret_bin_width: 0.02
+
+  # This number is determined by an analysis of the Shannon Entropy of
+  # the dataset. It sets the number of bins in the x and y dimensions
+  # to be the same.
+  number_of_bins: 300
+
+  # The number of replicates for this dataset.
+  num_replicates: 4
+
+  # Which plots to generate.
+  generate_gaussian_fits_plots: True
+  generate_logistic_fits_plots: True
+  generate_rsquared_fits_plots: True
+  generate_fine_grids_plots: True
+
+  # Limits to use when plotting the fine-grids / profiles.
+  fine_grid_xlim: [1.5, 4.5]
+  fine_grid_ylim: [-0.25, 0.75]
+
+  # The kind of plot type to output (default: PNG).
+  plot_type: png

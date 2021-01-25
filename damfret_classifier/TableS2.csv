@@ -1,0 +1,337 @@
+Gene,Replicate,Mean-FRET,Saturation-Concentration,Classification,Confidence-Score
+EPL1,1,-0.00218,0.0,No assembly at all concentrations (Blue Class),1.0
+EPL1,2,-0.00504,0.0,No assembly at all concentrations (Blue Class),1.0
+EPL1,3,-0.00584,0.0,No assembly at all concentrations (Blue Class),1.0
+EPL1,4,-0.00639,0.0,No assembly at all concentrations (Blue Class),1.0
+NRD1,1,0.02568,0.0,No assembly at all concentrations (Blue Class),1.0
+NRD1,2,-0.00155,0.0,No assembly at all concentrations (Blue Class),0.5437
+NRD1,3,-0.00217,0.0,No assembly at all concentrations (Blue Class),0.80726
+NRD1,4,0.0317,0.0,No assembly at all concentrations (Blue Class),1.0
+SLT2,1,-0.00377,0.0,No assembly at all concentrations (Blue Class),0.99847
+SLT2,2,-0.0027,0.0,No assembly at all concentrations (Blue Class),1.0
+SLT2,3,-0.00203,0.0,No assembly at all concentrations (Blue Class),0.99911
+SLT2,4,-0.00426,0.0,No assembly at all concentrations (Blue Class),1.0
+SAP30,1,-0.00316,4.89634,Incomplete Transition (Yellow Class),0.13802
+SAP30,2,-0.00583,4.45529,Incomplete Transition (Yellow Class),0.31665
+SAP30,3,-0.0015,4.14964,No assembly at all concentrations (Blue Class),1.0
+SAP30,4,-0.00378,4.55432,No assembly at all concentrations (Blue Class),1.0
+SCD6,1,-0.00406,0.0,No assembly at all concentrations (Blue Class),0.99557
+SCD6,2,-0.01086,0.0,No assembly at all concentrations (Blue Class),1.0
+SCD6,3,-0.00684,0.0,No assembly at all concentrations (Blue Class),1.0
+SCD6,4,-0.00183,0.0,No assembly at all concentrations (Blue Class),1.0
+SKG6,1,0.01411,0.0,No assembly at all concentrations (Blue Class),1.0
+SKG6,2,0.00109,0.0,No assembly at all concentrations (Blue Class),1.0
+SKG6,3,-0.00165,0.0,No assembly at all concentrations (Blue Class),1.0
+SKG6,4,0.00675,0.0,No assembly at all concentrations (Blue Class),1.0
+PDR1,1,0.01306,3.9755,Incomplete Transition (Yellow Class),0.85186
+PDR1,2,0.02032,3.93765,Incomplete Transition (Yellow Class),0.70634
+PDR1,3,0.0247,3.90418,Incomplete Transition (Yellow Class),0.67611
+PDR1,4,0.00635,4.04877,Incomplete Transition (Yellow Class),0.93098
+CLG1,1,0.03225,3.21112,No assembly at all concentrations (Blue Class),1.0
+CLG1,2,0.01678,2.96033,No assembly at all concentrations (Blue Class),1.0
+CLG1,3,0.0117,3.0682,Incomplete Transition (Yellow Class),0.99026
+CLG1,4,0.03851,3.32408,Incomplete Transition (Yellow Class),0.99539
+TAF12,1,-0.00457,0.0,No assembly at all concentrations (Blue Class),1.0
+TAF12,2,-0.00692,0.0,No assembly at all concentrations (Blue Class),1.0
+TAF12,3,-0.00416,0.0,No assembly at all concentrations (Blue Class),1.0
+TAF12,4,-0.00435,0.0,No assembly at all concentrations (Blue Class),1.0
+PIN3,1,-0.00336,0.0,No assembly at all concentrations (Blue Class),1.0
+PIN3,2,-0.00743,0.0,No assembly at all concentrations (Blue Class),1.0
+PIN3,3,-0.00703,0.0,No assembly at all concentrations (Blue Class),0.98588
+PIN3,4,-0.00342,0.0,No assembly at all concentrations (Blue Class),1.0
+MRN1,1,0.18999,2.72915,Discontinuous Transition (Green Class),0.08591
+MRN1,2,0.2156,2.73075,Continuous Transition (Red Class),0.05195
+MRN1,3,0.21894,2.75452,Continuous Transition (Red Class),0.33956
+MRN1,4,0.18324,2.78835,Continuous Transition (Red Class),0.09381
+RLM1,1,0.01182,3.96469,Incomplete Transition (Yellow Class),0.92604
+RLM1,2,0.01921,3.8242,Incomplete Transition (Yellow Class),0.84133
+RLM1,3,0.00816,3.59836,Incomplete Transition (Yellow Class),0.97448
+RLM1,4,0.00232,3.62472,Incomplete Transition (Yellow Class),0.97394
+RAT1,1,0.00613,0.0,No assembly at all concentrations (Blue Class),1.0
+RAT1,2,-0.00785,0.0,No assembly at all concentrations (Blue Class),1.0
+RAT1,3,-0.00196,3.69647,No assembly at all concentrations (Blue Class),1.0
+RAT1,4,0.00816,0.0,No assembly at all concentrations (Blue Class),0.96488
+PDC2,1,-0.00252,0.0,No assembly at all concentrations (Blue Class),1.0
+PDC2,2,-0.00097,0.0,No assembly at all concentrations (Blue Class),0.99987
+PDC2,3,-0.00057,0.0,No assembly at all concentrations (Blue Class),0.99962
+PDC2,4,-0.00127,0.0,No assembly at all concentrations (Blue Class),1.0
+GLN3,1,0.23446,2.67471,Continuous Transition (Red Class),0.04627
+GLN3,2,0.22985,2.65183,Continuous Transition (Red Class),0.05413
+GLN3,3,0.22788,2.61877,Continuous Transition (Red Class),0.01888
+GLN3,4,0.18166,2.68507,Continuous Transition (Red Class),0.01034
+NEW1,1,0.20352,2.31905,Discontinuous Transition (Green Class),0.08652
+NEW1,2,0.25706,2.18216,Discontinuous Transition (Green Class),0.02195
+NEW1,3,0.23678,2.21344,Discontinuous Transition (Green Class),0.22294
+NEW1,4,0.22913,2.26084,Discontinuous Transition (Green Class),0.04384
+ASG1,1,0.22312,0.0,Assembled at all concentrations (Black Class),0.99982
+ASG1,2,-0.00136,0.0,No assembly at all concentrations (Blue Class),1.0
+ASG1,3,-0.00225,0.0,No assembly at all concentrations (Blue Class),1.0
+ASG1,4,-0.00305,0.0,No assembly at all concentrations (Blue Class),1.0
+PCF11,1,0.02236,3.44441,No assembly at all concentrations (Blue Class),1.0
+PCF11,2,0.0107,0.0,No assembly at all concentrations (Blue Class),1.0
+PCF11,3,0.00498,0.0,No assembly at all concentrations (Blue Class),1.0
+PCF11,4,0.01651,0.0,No assembly at all concentrations (Blue Class),1.0
+PUF4,1,-0.00378,4.49992,No assembly at all concentrations (Blue Class),1.0
+PUF4,2,-0.00434,0.0,No assembly at all concentrations (Blue Class),0.94218
+PUF4,3,-0.0051,0.0,No assembly at all concentrations (Blue Class),0.99755
+PUF4,4,-0.00343,0.0,No assembly at all concentrations (Blue Class),1.0
+KSP1,1,0.03091,2.98527,Incomplete Transition (Yellow Class),0.51979
+KSP1,2,0.03047,3.22157,Incomplete Transition (Yellow Class),0.59687
+KSP1,3,0.03476,2.92111,Discontinuous Transition (Green Class),0.0548
+KSP1,4,0.02702,3.08364,Incomplete Transition (Yellow Class),0.70802
+YAK1,1,-0.00454,0.0,No assembly at all concentrations (Blue Class),1.0
+YAK1,2,-0.00621,0.0,No assembly at all concentrations (Blue Class),1.0
+YAK1,3,-0.0054,0.0,No assembly at all concentrations (Blue Class),1.0
+YAK1,4,-0.00301,0.0,No assembly at all concentrations (Blue Class),1.0
+PUB1,1,0.18881,2.91398,Continuous Transition (Red Class),0.05802
+PUB1,2,0.21179,2.75553,Discontinuous Transition (Green Class),0.14562
+PUB1,3,0.19641,2.8276,Discontinuous Transition (Green Class),0.06111
+PUB1,4,0.18345,2.89928,Continuous Transition (Red Class),0.01423
+GTS1,1,0.05901,2.10756,Continuous Transition (Red Class),0.22661
+GTS1,2,0.06129,2.21239,Continuous Transition (Red Class),0.14278
+GTS1,3,0.05658,2.17367,Continuous Transition (Red Class),0.04612
+GTS1,4,0.06192,2.09999,Continuous Transition (Red Class),0.13173
+MED2,1,-0.00258,0.0,No assembly at all concentrations (Blue Class),1.0
+MED2,2,-0.00265,0.0,No assembly at all concentrations (Blue Class),1.0
+MED2,3,-0.00247,0.0,No assembly at all concentrations (Blue Class),1.0
+MED2,4,-0.00318,0.0,No assembly at all concentrations (Blue Class),1.0
+RIM4,1,0.03172,3.12192,Incomplete Transition (Yellow Class),0.64586
+RIM4,2,0.01512,3.02762,Incomplete Transition (Yellow Class),0.72864
+RIM4,3,0.02204,2.9832,Incomplete Transition (Yellow Class),0.58787
+RIM4,4,0.01707,3.11439,Incomplete Transition (Yellow Class),0.88375
+URE2,1,-0.00288,4.33175,Incomplete Transition (Yellow Class),0.98621
+URE2,2,-0.0006,4.24693,Incomplete Transition (Yellow Class),0.94034
+URE2,3,-0.00407,4.28272,Incomplete Transition (Yellow Class),0.99414
+URE2,4,-0.00225,4.21487,Incomplete Transition (Yellow Class),0.99087
+GAL11,1,-0.00053,0.0,No assembly at all concentrations (Blue Class),0.99988
+GAL11,2,-0.002,0.0,No assembly at all concentrations (Blue Class),0.9626
+GAL11,3,-0.00266,0.0,No assembly at all concentrations (Blue Class),1.0
+GAL11,4,-0.00301,0.0,No assembly at all concentrations (Blue Class),1.0
+JSN1,1,0.05181,3.14041,Continuous Transition (Red Class),0.00444
+JSN1,2,0.03911,3.06694,Incomplete Transition (Yellow Class),0.17727
+JSN1,3,0.03723,3.10638,Incomplete Transition (Yellow Class),0.26706
+JSN1,4,0.04728,3.11342,Incomplete Transition (Yellow Class),0.34124
+SLA2,1,0.11113,0.0,Assembled at all concentrations (Black Class),1.0
+SLA2,2,0.10239,2.08704,Incomplete Transition (Yellow Class),0.02772
+SLA2,3,0.12446,1.59391,Continuous Transition (Red Class),0.06914
+SLA2,4,0.10206,2.73825,No assembly at all concentrations (Blue Class),1.0
+YLR177W,1,0.0013,0.0,No assembly at all concentrations (Blue Class),1.0
+YLR177W,2,-0.00123,0.0,No assembly at all concentrations (Blue Class),0.80456
+YLR177W,3,-0.00235,0.0,No assembly at all concentrations (Blue Class),0.99989
+YLR177W,4,0.00064,0.0,No assembly at all concentrations (Blue Class),1.0
+WWM1,1,0.01736,0.0,No assembly at all concentrations (Blue Class),1.0
+WWM1,2,0.0063,0.0,No assembly at all concentrations (Blue Class),0.924
+WWM1,3,0.01358,0.0,No assembly at all concentrations (Blue Class),1.0
+WWM1,4,0.02396,0.0,No assembly at all concentrations (Blue Class),1.0
+SIN3,1,0.0088,3.96607,No assembly at all concentrations (Blue Class),1.0
+SIN3,2,0.00603,0.0,No assembly at all concentrations (Blue Class),1.0
+SIN3,3,0.01381,0.0,No assembly at all concentrations (Blue Class),0.62964
+SIN3,4,0.01082,0.0,No assembly at all concentrations (Blue Class),0.98578
+CAF40,1,0.00081,0.0,No assembly at all concentrations (Blue Class),1.0
+CAF40,2,-0.00987,0.0,No assembly at all concentrations (Blue Class),1.0
+CAF40,3,-0.00142,0.0,No assembly at all concentrations (Blue Class),0.99927
+CAF40,4,0.00087,0.0,No assembly at all concentrations (Blue Class),1.0
+LSM4,1,0.17738,2.88497,Continuous Transition (Red Class),0.16361
+LSM4,2,0.18568,2.80195,Continuous Transition (Red Class),0.08323
+LSM4,3,0.1825,2.87527,Continuous Transition (Red Class),0.13479
+LSM4,4,0.16693,2.92284,Continuous Transition (Red Class),0.15809
+HRR25,1,-0.0052,0.0,No assembly at all concentrations (Blue Class),1.0
+HRR25,2,-0.00651,0.0,No assembly at all concentrations (Blue Class),1.0
+HRR25,3,-0.00759,0.0,No assembly at all concentrations (Blue Class),1.0
+HRR25,4,-0.00511,0.0,No assembly at all concentrations (Blue Class),1.0
+NRP1,1,0.24873,2.7444,Discontinuous Transition (Green Class),0.26692
+NRP1,2,0.2575,2.65568,Discontinuous Transition (Green Class),0.35043
+NRP1,3,0.25992,2.60782,Discontinuous Transition (Green Class),0.54497
+NRP1,4,0.24152,2.69772,Discontinuous Transition (Green Class),0.23052
+YBR016W,1,0.0036,4.31839,Incomplete Transition (Yellow Class),0.97747
+YBR016W,2,0.01043,4.35962,Incomplete Transition (Yellow Class),0.88839
+YBR016W,3,0.00317,4.52583,Incomplete Transition (Yellow Class),0.97685
+YBR016W,4,0.0023,4.78696,Incomplete Transition (Yellow Class),0.60306
+CCR4,1,-0.00083,0.0,No assembly at all concentrations (Blue Class),0.8109
+CCR4,2,-0.00327,0.0,No assembly at all concentrations (Blue Class),0.28548
+CCR4,3,-0.00562,0.0,No assembly at all concentrations (Blue Class),0.95129
+CCR4,4,-0.00194,0.0,No assembly at all concentrations (Blue Class),0.99248
+GPR1,1,0.01693,4.15015,Incomplete Transition (Yellow Class),0.76452
+GPR1,2,0.02152,4.04825,Incomplete Transition (Yellow Class),0.78389
+GPR1,3,0.0718,3.99001,Continuous Transition (Red Class),0.16833
+GPR1,4,0.01929,4.08861,Incomplete Transition (Yellow Class),0.76349
+ASM4,1,0.20905,2.66528,Discontinuous Transition (Green Class),0.43844
+ASM4,2,0.19062,2.66779,Discontinuous Transition (Green Class),0.32
+ASM4,3,0.26269,2.56876,Discontinuous Transition (Green Class),0.12556
+ASM4,4,0.19816,2.69419,Discontinuous Transition (Green Class),0.34481
+YCK1,1,-0.00321,0.0,No assembly at all concentrations (Blue Class),0.99813
+YCK1,2,-0.00448,4.14573,No assembly at all concentrations (Blue Class),1.0
+YCK1,3,-0.00391,0.0,No assembly at all concentrations (Blue Class),1.0
+YCK1,4,-0.00307,5.56259,No assembly at all concentrations (Blue Class),1.0
+CLA4,1,-0.00472,0.0,No assembly at all concentrations (Blue Class),1.0
+CLA4,2,-0.00735,0.0,No assembly at all concentrations (Blue Class),1.0
+CLA4,3,-0.00525,0.0,No assembly at all concentrations (Blue Class),1.0
+CLA4,4,-0.00503,0.0,No assembly at all concentrations (Blue Class),0.98662
+TIF4632,1,0.01416,3.4569,No assembly at all concentrations (Blue Class),1.0
+TIF4632,2,0.0081,3.62353,No assembly at all concentrations (Blue Class),1.0
+TIF4632,3,0.01523,5.41175,No assembly at all concentrations (Blue Class),1.0
+TIF4632,4,0.01741,3.99629,No assembly at all concentrations (Blue Class),1.0
+MCA1,1,0.06032,3.49122,Continuous Transition (Red Class),0.56947
+MCA1,2,0.07054,3.24386,Continuous Transition (Red Class),0.46906
+MCA1,3,0.0695,3.6103,Continuous Transition (Red Class),0.33321
+MCA1,4,0.06229,3.43038,Continuous Transition (Red Class),0.65242
+POP2,1,0.01386,0.0,No assembly at all concentrations (Blue Class),0.98089
+POP2,2,-0.01082,0.0,No assembly at all concentrations (Blue Class),1.0
+POP2,3,-0.01022,3.69219,No assembly at all concentrations (Blue Class),1.0
+POP2,4,0.01146,0.0,No assembly at all concentrations (Blue Class),1.0
+ENT2,1,0.00715,4.03786,Incomplete Transition (Yellow Class),0.98559
+ENT2,2,0.00798,3.90737,Incomplete Transition (Yellow Class),0.94646
+ENT2,3,0.00755,3.92842,Incomplete Transition (Yellow Class),0.98292
+ENT2,4,0.0057,4.31815,Incomplete Transition (Yellow Class),0.75218
+ENT1,1,0.01475,3.72344,Incomplete Transition (Yellow Class),0.49747
+ENT1,2,0.01793,3.65129,Incomplete Transition (Yellow Class),0.41638
+ENT1,3,0.0137,3.81596,Incomplete Transition (Yellow Class),0.71046
+ENT1,4,0.01417,3.88488,Incomplete Transition (Yellow Class),0.78601
+PUF2,1,0.22479,0.0,Assembled at all concentrations (Black Class),0.81628
+PUF2,2,0.17962,1.02905,Assembled at all concentrations (Black Class),1.0
+PUF2,3,0.16564,1.73897,Continuous Transition (Red Class),0.29297
+PUF2,4,0.18831,0.0,Assembled at all concentrations (Black Class),1.0
+NAB2,1,-0.00155,0.0,No assembly at all concentrations (Blue Class),0.49827
+NAB2,2,-0.00359,0.0,No assembly at all concentrations (Blue Class),1.0
+NAB2,3,-0.00239,0.0,No assembly at all concentrations (Blue Class),0.9986
+NAB2,4,-0.0028,0.0,No assembly at all concentrations (Blue Class),1.0
+SKG3,1,-0.00324,0.0,No assembly at all concentrations (Blue Class),1.0
+SKG3,2,-0.00772,0.0,No assembly at all concentrations (Blue Class),1.0
+SKG3,3,-0.0044,0.0,No assembly at all concentrations (Blue Class),1.0
+SKG3,4,-0.00383,0.0,No assembly at all concentrations (Blue Class),1.0
+UPC2,1,0.00967,3.63474,Incomplete Transition (Yellow Class),0.98373
+UPC2,2,0.00311,3.52171,Incomplete Transition (Yellow Class),0.98987
+UPC2,3,0.04728,2.7294,Continuous Transition (Red Class),0.01122
+UPC2,4,0.11271,2.69679,Discontinuous Transition (Green Class),0.05187
+EPO1,1,0.0021,0.0,No assembly at all concentrations (Blue Class),1.0
+EPO1,2,-0.00864,0.0,No assembly at all concentrations (Blue Class),0.99271
+EPO1,3,0.00045,0.0,No assembly at all concentrations (Blue Class),1.0
+EPO1,4,0.00027,0.0,No assembly at all concentrations (Blue Class),1.0
+SSD1,1,0.01038,3.78296,Incomplete Transition (Yellow Class),0.99272
+SSD1,2,0.01099,3.78232,No assembly at all concentrations (Blue Class),1.0
+SSD1,3,0.01196,4.13132,No assembly at all concentrations (Blue Class),1.0
+SSD1,4,0.00883,3.98893,No assembly at all concentrations (Blue Class),1.0
+NGR1,1,0.13559,2.75225,Discontinuous Transition (Green Class),0.09884
+NGR1,2,0.14308,2.63139,Continuous Transition (Red Class),0.04355
+NGR1,3,0.14919,2.58948,Discontinuous Transition (Green Class),0.13361
+NGR1,4,0.13535,2.74044,Discontinuous Transition (Green Class),0.079
+PGD1,1,0.01169,3.6516,Incomplete Transition (Yellow Class),0.94968
+PGD1,2,0.0031,3.6636,Incomplete Transition (Yellow Class),0.94764
+PGD1,3,0.00323,3.72017,Incomplete Transition (Yellow Class),0.97784
+PGD1,4,0.01034,3.70865,Incomplete Transition (Yellow Class),0.96308
+SLM1,1,-0.00342,0.0,No assembly at all concentrations (Blue Class),0.98934
+SLM1,2,-0.00712,0.0,No assembly at all concentrations (Blue Class),0.92972
+SLM1,3,-0.00485,0.0,No assembly at all concentrations (Blue Class),0.75374
+SLM1,4,-0.00247,0.0,No assembly at all concentrations (Blue Class),0.99123
+SDD4,1,0.05904,3.16676,Continuous Transition (Red Class),0.11301
+SDD4,2,0.07725,3.08165,Continuous Transition (Red Class),0.0967
+SDD4,3,0.07005,3.22497,Continuous Transition (Red Class),0.23309
+SDD4,4,0.05203,3.22042,Discontinuous Transition (Green Class),0.01282
+AKL1,1,-0.00314,0.0,No assembly at all concentrations (Blue Class),0.99983
+AKL1,2,-0.00415,0.0,No assembly at all concentrations (Blue Class),1.0
+AKL1,3,-0.00399,0.0,No assembly at all concentrations (Blue Class),1.0
+AKL1,4,-0.00335,0.0,No assembly at all concentrations (Blue Class),0.85315
+RBS1,1,0.2416,1.82975,Continuous Transition (Red Class),0.17792
+RBS1,2,0.22417,2.05539,Continuous Transition (Red Class),0.72572
+RBS1,3,0.22726,2.03963,Continuous Transition (Red Class),0.96385
+RBS1,4,0.21934,1.91689,Continuous Transition (Red Class),0.90912
+MCM1,1,0.00319,5.30619,No assembly at all concentrations (Blue Class),1.0
+MCM1,2,-0.00115,0.0,No assembly at all concentrations (Blue Class),1.0
+MCM1,3,-0.00311,0.0,No assembly at all concentrations (Blue Class),0.65426
+MCM1,4,-0.00084,0.0,No assembly at all concentrations (Blue Class),0.74376
+NSP1,1,0.17861,2.9803,Discontinuous Transition (Green Class),0.7901
+NSP1,2,0.20397,2.94259,Discontinuous Transition (Green Class),0.72427
+NSP1,3,0.17884,2.97746,Discontinuous Transition (Green Class),0.74131
+NSP1,4,0.1791,2.9443,Discontinuous Transition (Green Class),0.74389
+VTS1,1,0.00563,0.0,No assembly at all concentrations (Blue Class),0.75444
+VTS1,2,0.0002,0.0,No assembly at all concentrations (Blue Class),0.74521
+VTS1,3,0.00455,0.0,No assembly at all concentrations (Blue Class),0.39748
+VTS1,4,0.01471,5.27819,No assembly at all concentrations (Blue Class),1.0
+YBL081W,1,0.19006,2.35525,Discontinuous Transition (Green Class),0.12068
+YBL081W,2,0.20476,2.2571,Discontinuous Transition (Green Class),0.19335
+YBL081W,3,0.18817,2.29278,Discontinuous Transition (Green Class),0.44009
+YBL081W,4,0.20174,2.24925,Discontinuous Transition (Green Class),0.26212
+NUP42,1,-0.00082,0.0,No assembly at all concentrations (Blue Class),0.97464
+NUP42,2,-0.00628,4.37295,No assembly at all concentrations (Blue Class),1.0
+NUP42,3,-0.00469,4.30003,No assembly at all concentrations (Blue Class),1.0
+NUP42,4,-0.00179,0.0,No assembly at all concentrations (Blue Class),0.33485
+SNF2,1,-0.00669,0.0,No assembly at all concentrations (Blue Class),0.99699
+SNF2,2,-0.00448,0.0,No assembly at all concentrations (Blue Class),1.0
+SNF2,3,-0.0074,0.0,No assembly at all concentrations (Blue Class),1.0
+SNF2,4,-0.00395,0.0,No assembly at all concentrations (Blue Class),1.0
+HRP1,1,0.05292,3.03281,Continuous Transition (Red Class),0.23741
+HRP1,2,0.05467,2.93458,Continuous Transition (Red Class),0.04084
+HRP1,3,0.05283,2.95435,Continuous Transition (Red Class),0.22321
+HRP1,4,0.05566,3.02647,Continuous Transition (Red Class),0.12591
+SGF73,1,-0.00181,0.0,No assembly at all concentrations (Blue Class),0.98477
+SGF73,2,-0.00348,4.64626,No assembly at all concentrations (Blue Class),1.0
+SGF73,3,-0.00391,4.32142,No assembly at all concentrations (Blue Class),1.0
+SGF73,4,-0.0032,0.0,No assembly at all concentrations (Blue Class),0.9778
+NAB3,1,0.2467,1.13884,Assembled at all concentrations (Black Class),1.0
+NAB3,2,0.25445,1.19238,Assembled at all concentrations (Black Class),1.0
+NAB3,3,0.24122,0.0,Assembled at all concentrations (Black Class),0.70136
+NAB3,4,0.23794,1.07915,Assembled at all concentrations (Black Class),1.0
+PAN1,1,0.15107,2.70573,Continuous Transition (Red Class),0.00028
+PAN1,2,0.16033,2.72818,Discontinuous Transition (Green Class),0.05652
+PAN1,3,0.17784,2.64859,Discontinuous Transition (Green Class),0.11667
+PAN1,4,0.1526,2.74148,Discontinuous Transition (Green Class),0.00485
+CYC8,1,0.04175,3.08171,Discontinuous Transition (Green Class),0.28287
+CYC8,2,0.04854,3.00557,Discontinuous Transition (Green Class),0.28361
+CYC8,3,0.04824,2.96179,Discontinuous Transition (Green Class),0.42775
+CYC8,4,0.03461,3.18428,Discontinuous Transition (Green Class),0.34745
+NUP49,1,0.02433,3.35552,Incomplete Transition (Yellow Class),0.60793
+NUP49,2,0.02831,3.32693,Incomplete Transition (Yellow Class),0.42966
+NUP49,3,0.02848,3.36907,Incomplete Transition (Yellow Class),0.49218
+NUP49,4,0.0294,3.33511,Incomplete Transition (Yellow Class),0.48106
+CBK1,1,0.00881,3.61579,Incomplete Transition (Yellow Class),0.93827
+CBK1,2,0.00927,3.94991,No assembly at all concentrations (Blue Class),1.0
+CBK1,3,0.00448,5.39718,No assembly at all concentrations (Blue Class),1.0
+CBK1,4,0.00274,4.24137,No assembly at all concentrations (Blue Class),1.0
+PSP1,1,0.06275,2.7653,Discontinuous Transition (Green Class),0.72513
+PSP1,2,0.06359,2.98055,Continuous Transition (Red Class),0.00252
+PSP1,3,0.07594,2.67973,Discontinuous Transition (Green Class),0.69536
+PSP1,4,0.07204,2.72202,Discontinuous Transition (Green Class),0.67023
+AZF1,1,0.00318,3.80441,Incomplete Transition (Yellow Class),0.99503
+AZF1,2,0.0003,3.74481,Incomplete Transition (Yellow Class),0.99488
+AZF1,3,-0.00059,3.81324,No assembly at all concentrations (Blue Class),1.0
+AZF1,4,0.00592,3.80368,No assembly at all concentrations (Blue Class),1.0
+YAP1801,1,0.05199,2.2158,Discontinuous Transition (Green Class),0.19507
+YAP1801,2,0.05486,1.98637,Discontinuous Transition (Green Class),0.09256
+YAP1801,3,0.05628,3.63809,No assembly at all concentrations (Blue Class),1.0
+YAP1801,4,0.05515,1.80598,Discontinuous Transition (Green Class),0.24605
+NUP57,1,0.01274,3.94703,No assembly at all concentrations (Blue Class),1.0
+NUP57,2,0.01426,3.70453,Incomplete Transition (Yellow Class),0.99302
+NUP57,3,0.01339,4.58337,No assembly at all concentrations (Blue Class),1.0
+NUP57,4,0.01461,3.81348,Incomplete Transition (Yellow Class),0.9975
+SNF5,1,-0.00203,0.0,No assembly at all concentrations (Blue Class),1.0
+SNF5,2,-0.00466,0.0,No assembly at all concentrations (Blue Class),1.0
+SNF5,3,0.0012,0.0,No assembly at all concentrations (Blue Class),0.95201
+SNF5,4,0.0021,0.0,No assembly at all concentrations (Blue Class),1.0
+SOK2,1,0.11722,2.46392,Continuous Transition (Red Class),0.19211
+SOK2,2,0.12691,2.5083,Continuous Transition (Red Class),0.1593
+SOK2,3,0.12368,2.48824,Continuous Transition (Red Class),0.08865
+SOK2,4,0.11352,2.4494,Continuous Transition (Red Class),0.15341
+AIM3,1,0.07886,2.90383,Discontinuous Transition (Green Class),0.18089
+AIM3,2,0.11391,2.60868,Discontinuous Transition (Green Class),0.28213
+AIM3,3,0.10164,2.82519,Discontinuous Transition (Green Class),0.28513
+AIM3,4,0.09083,2.83215,Discontinuous Transition (Green Class),0.16509
+SCD5,1,0.0795,2.65369,Continuous Transition (Red Class),0.02031
+SCD5,2,0.084,2.72875,Continuous Transition (Red Class),0.09531
+SCD5,3,0.08207,2.65141,Continuous Transition (Red Class),0.05025
+SCD5,4,0.07314,2.68091,Continuous Transition (Red Class),0.15817
+DEF1,1,0.12246,2.80259,Continuous Transition (Red Class),0.26867
+DEF1,2,0.16148,2.36541,Continuous Transition (Red Class),0.46392
+DEF1,3,0.14776,2.28945,Continuous Transition (Red Class),0.3407
+DEF1,4,0.15167,2.31908,Continuous Transition (Red Class),0.4924
+SWI1,1,0.05876,3.26805,Discontinuous Transition (Green Class),0.12983
+SWI1,2,0.06327,3.15395,Discontinuous Transition (Green Class),0.28509
+SWI1,3,0.07215,3.16916,Discontinuous Transition (Green Class),0.577
+SWI1,4,0.05552,3.27442,Discontinuous Transition (Green Class),0.28426
+NUP116,1,0.07744,1.0,Assembled at all concentrations (Black Class),1.0
+NUP116,2,0.08113,1.89005,Discontinuous Transition (Green Class),0.40577
+NUP116,3,0.08261,1.90558,Discontinuous Transition (Green Class),0.54484
+NUP116,4,0.07994,1.58415,Higher Order State (Magenta Class),0.41807
+NUP100,1,0.13414,0.0,Assembled at all concentrations (Black Class),0.43223
+NUP100,2,0.12483,1.42113,Assembled at all concentrations (Black Class),1.0
+NUP100,3,0.13314,1.46024,Assembled at all concentrations (Black Class),1.0
+NUP100,4,0.13511,0.0,Assembled at all concentrations (Black Class),0.33569

@@ -1,0 +1,98 @@
+#!/usr/bin/env python3
+import pandas as pd
+from collections import namedtuple
+from argparse import ArgumentParser
+
+
+class TSV_File(object):
+    def __init__(self, filename):
+        self._data = None
+        self.keys = list()
+        self.objects = list()
+
+        self._data = pd.read_csv(filename, sep='\\s+')
+        self.keys = [self._convert_key(key) for key in self._data.keys()]
+
+        self._parse()
+
+
+    def _convert_key(self, key):
+        return key.replace('-', '_').replace('class', 'color')
+
+
+    def _parse(self):
+        TSV_Object = namedtuple('TSV_Object', ','.join(self.keys))
+        for _, row in self._data.iterrows():
+            obj = TSV_Object(*row)
+            self.objects.append(obj)
+
+
+    def _compare_objects(self, common_keys, diff_amount, obj_a, obj_b):
+        props_of_interest = list()
+        values_of_interest = list()
+        for key in common_keys:
+            value_a = getattr(obj_a, key)
+            value_b = getattr(obj_b, key)
+            if type(value_a) != str and value_a != value_b:
+                diff = abs(value_a - value_b)
+                if diff >= diff_amount:
+                    props_of_interest.append(key)
+                    values_of_interest.append((value_a, value_b, diff))
+            elif type(value_a) == str and value_a != value_b:
+                props_of_interest.append(key)
+                values_of_interest.append((value_a, value_b, None))
+        return props_of_interest, values_of_interest
+
+
+    def _print_differences(self, obj_a, obj_b, props_of_interest, values_of_interest):
+        if len(props_of_interest) != 0:
+            print(obj_a)
+            print(obj_b)
+            for prop, values in zip(props_of_interest, values_of_interest):
+                value_a, value_b, diff = values
+                if diff is not None:
+                    print('PROP: {:30s}FILE 1: {:.8f}\t\tFILE 2: {:.8f}\t\tABS DIFF: {:8f}'.format(prop, value_a, value_b, diff))
+                else:
+                    # str comparison
+                    print('PROP: {:30s}FILE 1: {}\t\tFILE 2: {}\t\tABS DIFF: DIFFERENT OBJECT/CLASS'.format(prop, value_a, value_b))
+            print()
+    
+
+    def compare(self, tsv: 'TSV_File', diff_amount: float) -> None:
+        common_keys = sorted(set(self.keys).intersection(tsv.keys))
+
+        if len(common_keys) != len(self.keys):
+            print('The two TSV objects are different. Only the following fields can be compared:')
+            print(','.join(common_keys), end='\n\n')
+
+        if len(self.objects) != len(tsv.objects):
+            print('Warning: the inner objects of the TSV files do not contain the same number!')
+            for obj_a in self.objects:
+                props_of_interest = list()
+                values_of_interest = list()
+                for obj_b in tsv.objects:
+                    if obj_a.gene == obj_b.gene and obj_a.replicate == obj_b.replicate: 
+                        props_of_interest, values_of_interest = self._compare_objects(common_keys, diff_amount, obj_a, obj_b)
+                        break
+                
+                self._print_differences(obj_a, obj_b, props_of_interest, values_of_interest)
+        else:
+            for obj_a, obj_b in zip(self.objects, tsv.objects):
+                props_of_interest, values_of_interest = self._compare_objects(common_keys, diff_amount, obj_a, obj_b)
+                self._print_differences(obj_a, obj_b, props_of_interest, values_of_interest)
+
+
+def main():
+    parser = ArgumentParser('tsv-comparator', description='This script compares two TSV files containing DAmFRET parameters and examines their differences.')
+    parser.add_argument('file1', help='The first TSV file to compare.', type=str)
+    parser.add_argument('file2', help='The second TSV file to compare.', type=str)
+    parser.add_argument('-ge', '--greater-than-or-equal-to', help='Look for parameters whose diff is >= this amount.', type=float, default=0.0001)
+    args = parser.parse_args()
+
+    tsv1 = TSV_File(args.file1)
+    tsv2 = TSV_File(args.file2)
+    tsv1.compare(tsv2, args.greater_than_or_equal_to)
+
+
+if __name__ == '__main__':
+    main()
