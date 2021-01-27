@@ -528,7 +528,6 @@ def classify_datasets(settings, config, genes_table):
         confidence_scores[filename] = (color, score)
         params['color'].append(color)
         params['score'].append(score)
-        break
     logger.info('End classification calculations.')
 
     confidence_scores_savename = os.path.join(config.work_dir, 'confidence-scores.npy')
