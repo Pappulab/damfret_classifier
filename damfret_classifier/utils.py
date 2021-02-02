@@ -226,28 +226,29 @@ def create_genes_table(config, plasmid_csv_filename, savename):
     if len(common) != len(expected_columns):
         raise RuntimeError('Expected columns "{}" not found. Exiting.'.format(', '.join(expected_columns)))
 
-    # reorder plasmid table by sequence length:
-    all_sequences = set(df['AA_sequence'].to_numpy().tolist())
-    seq_lens_genes = list()
-    for seq in all_sequences:
-        gene = df[df['AA_sequence'] == seq]['gene'].to_numpy().tolist()[0]
-        seq_lens_genes.append((seq, gene))
+    # reorder plasmid table by gene:
+    all_genes = set(df['gene'].to_numpy().tolist())
 
     all_selections = list()
     construct = 1
-    for sequence, _ in sorted(seq_lens_genes, key=lambda x: (len(x[0]), x[1])):
-        sel = df[df['AA_sequence'] == sequence].copy()
+    for gene in sorted(all_genes):
+        sel = df[df['gene'] == gene].copy()
         replicates  = list()
         constructs  = list()
         counts      = list()
         replicate   = 1
         for _index, row in sel.iterrows():
-            well_file       = row['well_file']
-            well            = int(well_file[1:])  # works for `A09` and `A9`
-            well_name       = '%s%d' % (well_file[0], well)  # reformat to match CSV data files name format.
-            data_filename   = os.path.join(config.data_dir, config.filename_format.format(well_name=well_name))
-            data            = pd.read_csv(data_filename)
-            cell_counts     = len(data)
+            well_file  = row['well_file']
+
+            # first check that the well file exists with a leading zero.
+            data_filename = os.path.join(config.data_dir, config.filename_format.format(well_name=well_file))
+            if not os.path.exists(data_filename):
+                well            = int(well_file[1:])  # works for `A09` and `A9`
+                well_name       = '%s%d' % (well_file[0], well)  # reformat to match CSV data files name format.
+                data_filename   = os.path.join(config.data_dir, config.filename_format.format(well_name=well_name))
+            
+            data        = pd.read_csv(data_filename)
+            cell_counts = len(data)
 
             replicates.append(replicate)
             constructs.append(construct)
