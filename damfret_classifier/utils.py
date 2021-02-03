@@ -15,7 +15,7 @@ from scipy.optimize import curve_fit
 
 __all__ = ['load_raw_synthetic_data', 'load_manuscript_classifications', 'create_directory_if_not_exist', 'shannon_entropy',
            'load_settings', 'read_original_data', 'remove_genes_and_replicates_below_count', 'validate_gene_replicates',
-           'create_genes_table', 'start_process', 'initialize_pool', 'parallelize', 'generate_default_config']
+           'create_genes_table', 'start_process', 'initialize_pool', 'parallelize', 'generate_default_config', 'to_fwf']
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -160,39 +160,68 @@ def remove_genes_and_replicates_below_count(genes_table, minimum_cell_count, con
     return table, excluded
 
 
-def validate_gene_replicates(genes_table, num_replicates, drop_extraneous=True):
+def validate_gene_replicates(genes_table, num_replicates, drop_extraneous=True, drop_if_fewer=True):
     """This is a helper function which is meant to examine a given genes table derived / populated
     via `create_genes_table` and determine if there are genes which do not have the expected number
     of replicates. By default extraneous replicates are dropped. Genes with less than the expected
-    number are dropped automatically.
+    number are dropped automatically by default.
 
     @param genes_table (pandas.DataFrame):  A table containing the genes, replicates, and well files.
     @param num_replicates (int):            The number of replicates to validate against.
     @param drop_extraneous (bool):          Whether or not to drop any replicates exceeding 
                                             `num_replicates` (default = True).
+    @param drop_if_fewer (bool):            Whether or not to drop genes if their replicates are
+                                            less than the expected number `num_replicates` (default=True).
     @return pandas.DataFrame:   The truncated `DataFrame`.
     """
+    columns_order = 'construct,replicate,gene,well_file,plasmid,counts,AA_sequence'.split(',')
     table = genes_table.copy()
     
     genes = set(table['gene'].to_numpy().tolist())
     counts = OrderedDict()
+    droppable = list()
+    truncatable = list()
     for gene in sorted(genes):
         df = table[table['gene'] == gene]
         if len(df) != num_replicates:
             counts[gene] = len(df)
 
             if len(df) < num_replicates:
-                table.drop(df.index, inplace=True)
+                droppable.append(df)
+                if drop_if_fewer:
+                    table.drop(df.index, inplace=True)
             else:
                 sel = df.iloc[num_replicates:]
-                table.drop(sel.index, inplace=True)
+                if drop_extraneous:
+                    truncatable.append(sel)
+                    table.drop(sel.index, inplace=True)
     table.reset_index(drop=True, inplace=True)  # Renumber the indices of the rows kept for simplicity.
+
+    dropped = pd.DataFrame()
+    truncated = pd.DataFrame()
+
+    if len(droppable) > 0:
+        dropped = pd.concat(droppable)
+        print('Some replicates were dropped. Those were saved to "dropped.tsv"...')
+        dropped[columns_order].to_fwf('dropped.tsv')
+
+    if len(truncatable) > 0:
+        truncated = pd.concat(truncatable)
+        print('Some replicates were truncated. Those were saved to "truncated.tsv"...')
+        truncated[columns_order].to_fwf('truncated.tsv')
     
     message = list()
-    header1 = 'Warning: The following genes do not match the expected number ({}).'.format(num_replicates)
-    header2 = 'Genes with replicates < {r} were dropped. Genes with replicates > {r} were truncated to {r}:'.format(r=num_replicates)
+    header1 = '\nWarning: The following genes do not match the expected number ({}).'.format(num_replicates)
     message.append(header1)
-    message.append(header2)
+
+    if drop_if_fewer:
+        header2 = 'Genes with replicates < {r} were dropped.'.format(r=num_replicates)
+        message.append(header2)
+    
+    if drop_extraneous:
+        header3 = 'Genes with replicates > {r} were truncated to {r}:'.format(r=num_replicates)
+        message.append(header3)
+
     for gene in counts:
         gene_counts = 'GENE: {}, ORIGINAL NUM REPLICATES: {}'.format(gene, counts[gene])
         message.append(gene_counts)
