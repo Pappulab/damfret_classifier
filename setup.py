@@ -10,5 +10,13 @@ setup(
     url='https://github.com/pappulab/damfret_classifier',
     packages=['damfret_classifier'],
     scripts=['bin/classify_damfret', 'bin/tsv-comparator'],
+    install_requires=[
+        'matplotlib>=3.3',
+        'numpy>=1.19',
+        'pandas>=1.2',
+        'PyYAML>=5.4',
+        'scipy>=1.5',
+        'tabulate>=0.8'
+    ],
     zip_safe=True
 )
