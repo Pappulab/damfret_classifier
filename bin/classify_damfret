@@ -18,14 +18,13 @@ script_description = (
 def main():
     parser = ArgumentParser('classify_damfret', description=script_description)
     parser.add_argument('config', help='The YAML config file to use.', type=str)
-    parser.add_argument('config_id', help='The identifier contained in the config file to load.', type=str)    
     args = parser.parse_args()
     
     print('Loading settings...')
     settings = load_settings(args.config)
 
     print('Loading config...')
-    config = Config(args.config, args.config_id)
+    config = Config(args.config)
 
     # more to add soon...
 

@@ -9,7 +9,7 @@ setup(
     license='GPL v2',
     url='https://github.com/pappulab/damfret_classifier',
     packages=['damfret_classifier'],
-    scripts=['bin/classify_damfret', 'bin/tsv-comparator', 'bin/manuscript_classifier'],
+    scripts=['bin/classify_damfret', 'bin/tsv-comparator'],
     install_requires=[
         'matplotlib>=3.3',
         'numpy>=1.19',
