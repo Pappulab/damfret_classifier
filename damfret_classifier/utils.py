@@ -1,4 +1,5 @@
 import os
+import re
 import io
 import pkgutil
 import yaml
@@ -15,10 +16,13 @@ from scipy.optimize import curve_fit
 
 __all__ = ['load_raw_synthetic_data', 'load_manuscript_classifications', 'create_directory_if_not_exist', 'shannon_entropy',
            'load_settings', 'read_original_data', 'remove_genes_and_replicates_below_count', 'validate_gene_replicates',
-           'create_genes_table', 'start_process', 'initialize_pool', 'parallelize', 'generate_default_config', 'to_fwf']
+           'create_genes_table', 'start_process', 'initialize_pool', 'parallelize', 'generate_default_config', 'to_fwf',
+           'clamp_data', 'find_subdirectories', 'read_manioc_config', 'validate_directory_tree', 
+           'check_if_data_within_limits', 'parse_manioc_timestamp']
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Pandas utils
 
 
 # Supremely useful answer to convert a DataFrame to a TSV file: https://stackoverflow.com/a/35974742/866930
@@ -31,6 +35,7 @@ pd.DataFrame.to_fwf = to_fwf
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Loader and generator utils
 
 
 def load_raw_synthetic_data():
@@ -72,14 +77,224 @@ def generate_default_config():
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Filesystem utils
 
 
 def create_directory_if_not_exist(directory):
-    """Create a directory if it does not exist and do not through an error if the `directory` already exists."""
+    """Create a directory if it does not exist and do not through an error if the `directory` already exists.
+
+    @param directory (str): The path of the directory which will be created.
+    @return bool: Whether or not the path created is a directory.
+    """
     path = Path(directory)
     path.mkdir(parents=True, exist_ok=True)
     return os.path.isdir(path)
 
+
+def find_subdirectories(pathname):
+    """Identify the subdirectories within a provided path, and return their full path names.
+
+    @pathname (str): The location of the directory that will be searched.
+    @return subdirectories (list): A list of all the subdirectories located within the provided path.
+    """
+    # Expand the pathname in case it contains `~/` i.e. a relative path to the user's home directory.
+    expanded_path = os.path.expanduser(pathname)
+    path = Path(expanded_path)
+    if not path.is_dir():
+        raise RuntimeError('The path supplied "{}" is a file - please pass a path name instead.'.format(pathname))
+
+    subdirectories = [p for p in path.glob('**/') if p.is_dir()]
+    return subdirectories
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# MANIOC utils
+
+
+def read_manioc_config(config_filename):
+    """This function reads in a MANIOC config file, and parses the contents into an `OrderedDict`
+    for easier use and access. This object can then be used for validating the existence of the
+    paths.
+
+    @param config_filename (str): The name of the config file which will be parsed into an
+                                  `OrderedDict` object.
+    @return config (OrderedDict): An `OrderedDict` in which the key / value pairs have
+                                  been extracted from the MANIOC config file.
+    """
+    config = OrderedDict()
+
+    # Check that the config file exists; exit otherwise.
+    if not os.path.exists(config_filename):
+        raise RuntimeError('MANIOC config file "{}" not found. Exiting.'.format(config_filename))
+
+    # Read the data in as a bunch of raw lines.
+    with open(config_filename, 'r') as config_file:
+        data = config_file.readlines()
+
+    # In the first pass, remove the comments.
+    cleaned_data = list()
+    for line in data:
+        if not line.startswith('#') or '#' not in line:
+            cleaned_data.append(line.strip())
+        else:
+            # Remove the comment data (i.e. all characters after '#')
+            # in case a line contains an appended in-line comment.
+            index   = line.index('#')
+            ln      = line[:index].strip()
+            if len(ln) > 0:
+                cleaned_data.append(ln)
+    
+    # In the second pass, populate the config based on the cleaned data.
+    for line in cleaned_data:
+        setting, option = line.split(':=')
+        config[setting] = option
+    
+    # Our faux config object is now populated and available for use.
+    return config
+
+
+def parse_manioc_timestamp(time_str):
+    """Read an input string from MANIOC and extract the datetime from it. Useful for populating log files
+    and other related house-keeping tasks.
+    
+    @param time_str (str): The string that may contain a datetime string (in an ISO-like format). If
+                           found, it will be extracted and converted to a datetime object which will
+                           be returned.
+
+    @return tuple:         A 2-tuple containing a boolean and a datetime object if a datetime string
+                           is identified. Otherwise, the 2-tuple returns a boolean (False) and None.
+    """
+    parsed          = False
+    datetime_obj    = None
+
+    # This matches against MANIOC's ISO-like datetime format i.e. `YYYY-mm-DD-HH-MM-SS`.
+    regex = re.compile('(\\d{4})-(\\d{2})-(\\d{2})-(\\d{2})-(\\d{2})-(\\d{2})')
+    match = regex.search(time_str)  # See: https://docs.python.org/3/library/re.html#search-vs-match
+
+    # Convert the regex match (tuple), if found, to a string, and parse it to a datetime object.
+    if match is not None:
+        date_tuple      = match.groups()
+        datetime_obj    = datetime.strptime('-'.join(date_tuple), '%Y-%m-%d-%H-%M-%S')
+        parsed          = True
+    
+    # Finally, return it.
+    return parsed, datetime_obj 
+
+
+def validate_directory_tree(pathname):
+    """This function checks and verifies the existences of the `manioc.results` sub-directories as read from the
+    input `manioc.config` filename. If the required sub-directories are not found, the program raises an error
+    and exits.
+    
+    @param pathname (str):              The directory whose contents will be examined and checked.
+    @return paths_of_interest (list):   A list containing paths that are likely to contain data for subsequent
+                                        analysis.
+
+    If this succeeds, subsequent analysis can proceed.
+    """
+    path        = os.path.expanduser(pathname)
+    root_path   = Path(path)
+
+    # Read in the MANIOC config and consult its variables for use.
+    manioc_path         = root_path.joinpath('manioc.config')
+    manioc_config       = read_manioc_config(manioc_path)
+    manioc_results_root = root_path.joinpath(manioc_config['resultsDir'], manioc_config['rawDir'])
+
+    # Populate the base directories which will be searched.
+    # Common directories that could be found are `raw_data`, `analysis`, and `manioc.results`.
+    #
+    # Only `raw_data` and `manioc.results` are required. However, as `raw_data` is actually
+    # populated from the variable `rawDir` in the MANIOC config, we consult that directly
+    # since the value could change; `manioc.results` appears to be fixed.
+    raw_dir                 = str(Path(manioc_config['rawDir']))
+    required_directories    = '{raw_dir},manioc.results'.format(raw_dir=raw_dir)
+    subdirectories          = find_subdirectories(path)
+    required_subdirectories = {p:root_path.joinpath(p) for p in required_directories.split(',')}
+
+    # Check that the required base subdirectories are found in the search path.
+    for dirname in required_subdirectories:
+        directory = required_subdirectories[dirname]
+        if directory not in subdirectories:
+            raise RuntimeError('Required base directory "{}" not found in root path: "{}"'.format(dirname, root_path))
+
+    # Now check whether the tree from `raw_data` is populated in `manioc.results`
+    # since if this is validated, it means that we can proceed with the analysis.
+    # Recall that MANIOC creates an exact duplicate of the directory tree under 
+    # `raw_data` but prepended with the `resultsDir` path from the MANIOC config.
+    raw_data_dir    = required_subdirectories[raw_dir]
+    relative_paths  = list()
+    for subdir in subdirectories:
+        str_raw_data_dir    = str(raw_data_dir)
+        str_subdir          = str(subdir)
+
+        # Check for instances where the relative path is contained in the
+        # name of the paths being searched. We exclude the exact match as
+        # it is superfluous; hence the use of `!=`.
+        if str_raw_data_dir != str_subdir and str_raw_data_dir in str_subdir:
+            relative_path = os.path.relpath(subdir, raw_data_dir)
+            relative_paths.append(relative_path)
+    
+    paths_of_interest = list()
+    for relative_path in relative_paths:
+        manioc_results_path = manioc_results_root.joinpath(relative_path)
+        if not manioc_results_path.exists():
+            raise RuntimeError('Required MANIOC results directory not found: "{}".'.format(manioc_results_path))
+
+        # Extract only the subdirectories containing timestamps. These are the subdirectories
+        # which likely contain processed data ready for analysis.
+        parsed, _date = parse_manioc_timestamp(relative_path)  # `_date` is ignored - hence the leading underscore.
+        if parsed:
+            paths_of_interest.append(manioc_results_path)
+    return paths_of_interest
+
+
+# ---------------------------------------------------------------------------------------------------------------------
+# Miscellaneous utils
+
+
+def clamp_data(data, low_conc_cutoff, high_conc_cutoff):
+    """This function restricts the input `data` to be contained within the limits: 
+    `low_conc_cutoff` and `high_conc_cutoff`.
+
+    @param data (pandas.DataFrame):     The raw input data yet to be histogrammed.
+    @param low_conc_cutoff (float):     The lower cutoff limit. Values below this will be dropped.
+    @param high_conc_cutoff (float):    The upper cutoff limit. Values above this will be dropped.
+
+    @return pandas.DataFrame:           The updated DataFrame with the values outside of the limits
+                                        removed.
+    """
+    data = data.dropna()  # remove rows containing NaN values
+    data = data[data['concentration'] >= low_conc_cutoff]
+    data = data[data['concentration'] <= high_conc_cutoff]
+    return data
+
+
+def check_if_data_within_limits(data, low_conc_cutoff, high_conc_cutoff):
+    """This function checks whether valid data exists within the limits provided. It uses the min
+    and max of the raw concentration data (i.e. pre-clamped) as an back of the envelope check for
+    validity. This is necessary as data outside of these limits will be dropped, and the 
+    classification may not proceed, or in some cases be inaccuracte. It should be noted that minimum 
+    concentration will be negative, but that's alright as the system is very noisy at low concentration.
+
+    @param data (pandas.DataFrame):                 The raw input data yet to be histogrammed.
+    @param low_conc_cutoff (float):                 The lower cutoff limit. Values below this 
+                                                    will be dropped.
+    @param high_conc_cutoff (float):                The upper cutoff limit. Values above this 
+                                                    will be dropped.
+
+    @return valid (bool), min (float), max (float): Values corresponding to the check which could
+                                                    be used to isolate the current data set for
+                                                    additional processing.
+    """
+    data = data.dropna()
+    min_conc = min(data['concentration'])
+    max_conc = max(data['concentration'])
+
+    valid = False
+    if max_conc <= high_conc_cutoff and max_conc >= low_conc_cutoff:
+        valid = True
+    
+    return valid, min_conc, max_conc
 
 
 def shannon_entropy(histogram2d):
@@ -298,6 +513,7 @@ def create_genes_table(config, plasmid_csv_filename, savename):
 
 
 # ---------------------------------------------------------------------------------------------------------------------
+# Parallelization utils
 
 
 def start_process():

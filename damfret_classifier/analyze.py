@@ -9,7 +9,7 @@ from tabulate import tabulate
 from damfret_classifier.plotting import plot_gaussian_fits, plot_logistic_fits, plot_linear_rsquared_fit, plot_fine_grid_profiles
 from damfret_classifier.utils import load_raw_synthetic_data, load_manuscript_classifications, create_directory_if_not_exist
 from damfret_classifier.utils import load_settings, read_original_data, remove_genes_and_replicates_below_count
-from damfret_classifier.utils import create_genes_table
+from damfret_classifier.utils import create_genes_table, clamp_data
 from damfret_classifier.config import Config
 from damfret_classifier.logger import logging as logger
 
@@ -26,22 +26,6 @@ def to_fwf(df, fname):
 
 
 # ---------------------------------------------------------------------------------------------------------------------
-
-
-def clamp_data(data, low_conc_cutoff, high_conc_cutoff):
-    """This function restricts the input `data` to be contained within the limits: 
-    `low_conc_cutoff` and `high_conc_cutoff`.
-
-    @param data (pandas.DataFrame):     The raw input data yet to be histogrammed.
-    @param low_conc_cutoff (float):     The lower cutoff limit. Values below this will be dropped.
-    @param high_conc_cutoff (float):    The upper cutoff limit. Values above this will be dropped.
-    @return pandas.DataFrame:           The updated DataFrame with the values outside of the limits
-                                        removed.
-    """
-    data = data.dropna()  # remove rows containing NaN values
-    data = data[data['concentration'] >= low_conc_cutoff]
-    data = data[data['concentration'] <= high_conc_cutoff]
-    return data
 
 
 def calculate_rsquared(func, xdata, ydata, p0=None, bounds=None, maxfev=10000):
