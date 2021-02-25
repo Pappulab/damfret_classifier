@@ -378,7 +378,7 @@ def classify_datasets(settings, config, genes_table):
         r_squared = np.array(r_squared)
         params['max-gauss-r2'].append(np.max(r_squared))
         
-        # fit a linear function to the R^2 values of the Guass2 fits across the different slices.
+        # fit a linear function to the R^2 values of the Gauss2 fits across the different slices.
         linear_func = lambda x, a, b: a*x + b
         popt, pconv = curve_fit(linear_func, conc_bin_centers, r_squared, bounds=[[-np.inf, -np.inf], [0, np.inf]])
         linear_func_data = linear_func(conc_bin_centers, *popt)

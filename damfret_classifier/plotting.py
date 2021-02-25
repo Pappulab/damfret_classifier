@@ -54,9 +54,7 @@ def plot_gaussian_fits(plot_params):
     ax.set_title('Histogram of FRET values in the concentration slice %.2f - %.2f (nucleated = %f)\n(%s)' % (conc_slice[0], conc_slice[1], frac_nucleated, well_name))
     ax.legend()
     
-    savedir = os.path.join(savepath, well_name)
-    create_directory_if_not_exist(savedir)
-    savename = os.path.join(savedir, '{well_name}---slice-{slice_num:02d}.{ext}'.format(well_name=well_name, slice_num=slice_number, ext=extension))
+    savename = os.path.join(savepath, '{well_name}---slice-{slice_num:02d}.{ext}'.format(well_name=well_name, slice_num=slice_number, ext=extension))
     fig.savefig(savename)
     plt.close(fig)
 
@@ -90,9 +88,7 @@ def plot_logistic_fits(plot_params):
     ax.set_xlabel('$log_{10}$ Concentration')
     ax.legend()
 
-    savedir = os.path.join(savepath, well_name)
-    create_directory_if_not_exist(savedir)
-    savename = os.path.join(savedir, '{well_name}---logistic-fit.{ext}'.format(well_name=well_name, ext=extension))
+    savename = os.path.join(savepath, '{well_name}---logistic-fit.{ext}'.format(well_name=well_name, ext=extension))
     fig.savefig(savename)
     plt.close(fig)
 
@@ -122,9 +118,7 @@ def plot_linear_rsquared_fit(plot_params):
     ax.set_ylabel('$R^2$ value of the Guass2 fit on sliced AmFRET data')
     ax.legend()
 
-    savedir = os.path.join(savepath, well_name)
-    create_directory_if_not_exist(savedir)
-    savename = os.path.join(savedir, '{well_name}---rsquared-fit.{ext}'.format(well_name=well_name, ext=extension))
+    savename = os.path.join(savepath, '{well_name}---rsquared-fit.{ext}'.format(well_name=well_name, ext=extension))
     fig.savefig(savename)
     plt.close(fig)
 
@@ -169,9 +163,7 @@ def plot_fine_grid_profiles(plot_params):
     cbar = fig.colorbar(im, cax=cax)
     cbar.ax.set_ylabel('Counts', labelpad=30, rotation=270, fontsize=20)
 
-    savedir = os.path.join(savepath, well_name)
-    create_directory_if_not_exist(savedir)
-    savename = os.path.join(savedir, '{well_name}---fine-grid.{ext}'.format(well_name=well_name, ext=extension))
+    savename = os.path.join(savepath, '{well_name}---fine-grid.{ext}'.format(well_name=well_name, ext=extension))
     fig.savefig(savename)
     plt.close(fig)
 
@@ -264,6 +256,6 @@ def analyze_shannon_entropy(config, constructs_df, genes, replicates, descriptio
 
     lgd = axes[1].legend(loc='center left', bbox_to_anchor=(1, 0.5), prop={'size': 16})
 
-    savepath = os.path.join(config.plots_dir, '{savename}.{ext}'.format(savename=savename, ext=config.plot_type))
+    savepath = os.path.join('{savename}.{ext}'.format(savename=savename, ext=config.plot_type))
     fig.savefig(savepath, bbox_extra_artists=(lgd,))
     plt.close(fig)
