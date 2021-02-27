@@ -44,7 +44,7 @@ project_directory: Null
 # the concentration range exceeding the values provided in `low_conc`
 # and `high_conc`, a subsequent analysis can be performed by referring to
 # a different CSV file containing the previously "skipped" wells. This
-# parameter annot be `Null` at runtime.
+# parameter cannot be `Null` at runtime.
 wells_filename: Null
 
 
@@ -56,8 +56,15 @@ filename_format: '{well_name}.fcs.csv'
 
 # The location where the parameters and numpy arrays will be saved.
 # If `Null`, a default directory called `work---<YYYY-mm-DD_HH-MM-SS>` will 
-# be created.
+# be created. `Null` is the default and preferred option as it isolates
+# each run.
 work_directory: Null
+
+
+# The location where the intermediate log files will be created. If `Null`, 
+# a default directory called `logs---<YYYY-mm-DD_HH-MM-SS>` will be created. 
+# `Null` is the default and preferred option as it isolates each run.
+logs_directory: Null
 
 
 # Skip the analysis of files (usually gated well files) containing less 

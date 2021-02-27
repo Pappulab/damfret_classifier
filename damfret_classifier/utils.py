@@ -324,7 +324,7 @@ def load_settings(yaml_filename):
         return yaml.safe_load(yfile)
 
 
-def read_original_data(filename, low_conc_cutoff, high_conc_cutoff):
+def read_original_data(filename, low_conc_cutoff, high_conc_cutoff, apply_cutoff=True):
     """This is a convenience function will provides the user with the ability to load a given 
     dataset and apply the cutoffs (`low_conc_cutoff` and `high_conc_cutoff`) according to the 
     algorithm used.
@@ -336,12 +336,25 @@ def read_original_data(filename, low_conc_cutoff, high_conc_cutoff):
     df['concentration'] = np.log10(data['Acceptor-A'])
     df['damfret'] = data['FRET-A']/data['Acceptor-A']
 
-    # Remove extraneous data not found between the limits.
+    # Remove extraneous data not found between the limits if requested.
+    if apply_cutoff:
+        df = df[df['concentration'] >= low_conc_cutoff]
+        df = df[df['concentration'] <= high_conc_cutoff]
+    df = df.dropna()  # Remove any rows with NaN values in the FRET columns.
+    df.reset_index(drop=True, inplace=True)  # Renumber the indices of the rows kept for simplicity.
+
+    return df, counts
+
+
+def apply_cutoff_to_dataframe(data_df, low_conc_cutoff, high_conc_cutoff):
+    """This is another convenience function to apply a cutoff on an already loaded DataFrame."""
+    df = data_df.copy()
+    counts = len(data_df)  # Record the original number of points
+
     df = df[df['concentration'] >= low_conc_cutoff]
     df = df[df['concentration'] <= high_conc_cutoff]
     df = df.dropna()  # Remove any rows with NaN values in the FRET columns.
     df.reset_index(drop=True, inplace=True)  # Renumber the indices of the rows kept for simplicity.
-
     return df, counts
 
 
@@ -553,11 +566,23 @@ def parallelize(func, list_of_func_args, num_processes=None):
     
     results = OrderedDict()
     for func_args in list_of_func_args:
-        result = pool.apply_async(func, args=func_args)
-        current_time = datetime.utcnow()
-        func_result = (result, current_time)
+        async_result = pool.apply_async(func, args=func_args)
+        start_time = datetime.now()
+        func_result = (async_result, start_time)
         results[func_args] = func_result
     
     pool.close()
     pool.join()
-    return results
+
+    # To obtain the results as they arrive, we need to use `AsyncResult.get()` - i.e.
+    # `result.get()`. However, doing this in the processing loop will block and never
+    # yield performance increases above those using 1 CPU. So, to parallelize the 
+    # results call, we do the `get()` after the pool has been closed and joined.
+    actual_results = OrderedDict()
+    for fargs in results:
+        async_result, start_time = results[fargs]
+        result = async_result.get()
+        current_time = datetime.now()
+        actual_results[fargs] = (result, start_time, current_time)
+
+    return actual_results

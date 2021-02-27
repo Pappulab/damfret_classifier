@@ -1,28 +1,28 @@
 import os
+import re
 import time
+import logging
 import numpy as np
 import pandas as pd
 from datetime import datetime
 from scipy.optimize import curve_fit
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
 from tabulate import tabulate
-from damfret_classifier.plotting import plot_gaussian_fits, plot_logistic_fits, plot_linear_rsquared_fit, plot_fine_grid_profiles
-from damfret_classifier.utils import load_raw_synthetic_data, load_manuscript_classifications, create_directory_if_not_exist
-from damfret_classifier.utils import load_settings, read_original_data, remove_genes_and_replicates_below_count
-from damfret_classifier.utils import create_genes_table, clamp_data
+
 from damfret_classifier.config import Config
-from damfret_classifier.logger import logging as logger
+from damfret_classifier.logger import setup_logger
+from damfret_classifier.parameters import Parameters
+from damfret_classifier.plotting import plot_gaussian_fits, plot_logistic_fits
+from damfret_classifier.plotting import plot_linear_rsquared_fit, plot_fine_grid_profiles
+from damfret_classifier.utils import load_settings, load_raw_synthetic_data, load_manuscript_classifications
+from damfret_classifier.utils import read_original_data, remove_genes_and_replicates_below_count
+from damfret_classifier.utils import apply_cutoff_to_dataframe, to_fwf
+from damfret_classifier.utils import create_genes_table, clamp_data, check_if_data_within_limits
+from damfret_classifier.utils import initialize_pool, parallelize
 
 
-__all__ = 'clamp_data,calculate_rsquared,slice_data,calculate_nucleated_fractions,determine_class,classify_datasets'.split(',')
-
-
-# Supremely useful answer to convert a DataFrame to a TSV file: https://stackoverflow.com/a/35974742/866930
-def to_fwf(df, fname):
-    """This is a convenience function which is used for the easier generation of TSV files from panda.DataFrame
-    objects. It is meant to be tacked on as a function to a Pandas Dataframe object. Since this effectively
-    monkey-patches the code, it has to be performed on a per file basis."""
-    content = tabulate(df.values.tolist(), list(df.columns), tablefmt="plain", floatfmt='.5f')
+__all__ = ['clamp_data', 'calculate_rsquared', 'slice_data', 'calculate_nucleated_fractions', 'determine_class',
+           'classify_dataset', 'classify_datasets']
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -173,7 +173,7 @@ def calculate_nucleated_fractions(config, well_name, slices_histograms, average)
         frac_nucleated = np.trapz(y2)/(np.trapz(y1) + np.trapz(y2))
         if config.plot_gaussian:
             plot_params = dict()
-            plot_params['savepath']       = config.plots_dir
+            plot_params['savepath']       = config.work_dir
             plot_params['well_name']      = well_name
             plot_params['norm_fret_hist'] = norm_fret_hist
             plot_params['x']              = x
@@ -271,254 +271,384 @@ def determine_class(df_points, fraction_above_csat, diff, fit_value, region_r_sq
     return color, score
 
 
-def classify_datasets(settings, config, genes_table):
-    """This function does the heavy lifting and is the main entry point for processing
-    and classifying the data in a single-threaded process.
+def insert_section_separator(logger):
+    logger.info('{}'.format('=' * 80))
 
-    @param settings (pandas.DataFrame):     A pandas DataFrame containing the project settings.
-    @param config (Config):                 A config object initialized according to parameters
-                                            suited to the data being analyzed.
-    @param genes_table (pandas.DataFrame):  A pandas DataFrame comprised of all the gene, plasmid,
-                                            and well_name data.
 
-    At completion this function generates intermediate plots for debugging as indicated, as well
-    as a numpy array containing the confidence scores and class / color assignments. Lastly, it
-    also generates a summary file, `parameters.tsv` which contains all the parameters of interest
-    to the calculation and class / color determination, which is useful for debugging.
-    """
-    if not isinstance(config, Config):
-        raise RuntimeWarning('A `damfret_classifier.Config` object is required.')
-    
-    # Set the random seed for reproducibility.
-    random_seed = settings['random_seed']
-    if random_seed is None:
-        random_seed = int(datetime.now().timestamp())
-        np.random.seed(random_seed)
-    logger.info('Using random seed: {}.'.format(random_seed))
+def _log_conc_FRET_averages(logger, average, conc_fret_averages):
+    logger.info('Conc FRET average: {}'.format(average))
+    logger.info('All conc FRET averages: {}'.format(conc_fret_averages))
+    logger.info('Last 4 conc FRET averages: {}'.format(conc_fret_averages[-4:]))
 
-    # A lambda function is used for fitting as the parameters are dynamically set.
-    # Typically defined functions i.e. using `def` is not mutable and only one reference
-    # is populated - remaining calls are not updated with new values.
+
+def _log_region_values(logger, region_indices, region_lower, region_upper, conc_bin_centers):
+    logger.info('Region Indices: {}'.format(region_indices))
+    logger.info('Region lower: {}'.format(region_lower))
+    logger.info('Region upper: {}'.format(region_upper))
+    logger.info('Concentration bin centers at region lower: {}'.format(conc_bin_centers[region_lower]))
+    logger.info('Concentration bin centers at region upper: {}'.format(conc_bin_centers[region_upper]))
+    logger.info('Concentration bin centers using region indices: {}'.format(conc_bin_centers[region_indices]))
+
+
+def _log_class_and_score(logger, well_file, color, score, output=True):
+    message = 'Analysis :: Well file: "{}" class: "{}" score: "{}"'.format(well_file, color, score)
+    logger.info(message)
+    if output:
+        print(message)
+
+
+def _log_skipped_analysis(logger, well_file, low_conc, high_conc, min_conc, max_conc):
+    message1 = 'Skipped :: well file "{}" exceeds the defined concentration limits.'.format(well_file)
+    message2 = 'Input concentration limits: ({}, {})'.format(low_conc, high_conc)
+    message3 = 'Actual concentration limits: ({}, {})'.format(min_conc, max_conc)
+    message4 = 'This file will not be analyzed and marked with zeroes & N/A in the final parameter file.'
+    logger.info(message1)
+    logger.info(message2)
+    logger.info(message3)
+    logger.info(message4)
+    logger.info('')
+    print(message1)
+    print(message2)
+    print(message3)
+    print(message4)
+    print('')
+
+
+def _configure_logger(logs_dir, raw_well_name):
+    well_log_filepath = os.path.join(logs_dir, '{well}.log'.format(well=raw_well_name))
+    setup_logger(raw_well_name, well_log_filepath)
+    logger = logging.getLogger(raw_well_name)
+    return logger
+
+
+def _determine_well_name(raw_well_name):
+    well_regex = re.compile('([A-Z])+(\\d+)')
+    match = well_regex.search(raw_well_name)
+    if match is None:
+        raise RuntimeError('No well entry found for well: {}'.format(raw_well_name))
+
+    groups = match.groups()
+    base_well_name = groups[0]
+    well_num = groups[1]
+
+    # reformat to match the CSV name format (i.e. not zero-padded) - hence the use of `int`.
+    well_name = '{base_well}{well_num}'.format(base_well=base_well_name, well_num=int(well_num))
+    return well_name
+
+
+def classify_dataset(config, raw_well_name, apply_nice=False):
     logistic_func = lambda x, b, c: 1.0/(1.0+np.exp(-(x-b)/c))
     logistic_bounds = [[1, 0], [20, 2]]
     p0 = (5, 0.3)
 
-    params = OrderedDict()
-    params['gene']                      = list()
-    params['construct']                 = list()
-    params['replicate']                 = list()
-    params['well_file']                 = list()
-    params['counts']                    = list()
-    params['mean-fret']                 = list()
-    params['gauss2-loc']                = list()
-    params['csat']                      = list()
-    params['csat-slope']                = list()
-    params['linear-r2']                 = list()
-    params['max-gauss-r2']              = list()
-    params['min-r2-region']             = list()
-    params['max-r2-region']             = list()
-    params['min-abs-diff-r2-region']    = list()
-    params['max-abs-diff-r2-region']    = list()
-    params['frac-above-csat']           = list()
-    params['color']                     = list()
-    params['score']                     = list()
+    # Set the nice / priority level for the function when it
+    # is executed. This becomes important when multiprocessing is applied.
+    if apply_nice:
+        os.nice(config.nice_level)
 
-    counted = list()
-    confidence_scores = OrderedDict()
-    logger.info('Beginning classification calculations.')
-    replicate_number = 0
-    for replicate_index, row in genes_table.iterrows():
-        well = int(row.well_file[1:])  # works for `A09` and `A9`
-        well_name = '%s%d' % (row.well_file[0], well)  # reformat to match CSV data files name format.
+    # We use the `raw_well_name` - e.g. A01 which has the leading zero. 
+    # The purpose of this is that when the log is saved, it can easily
+    # be sorted and collated into the final session log.
+    logger = _configure_logger(config.logs_dir, raw_well_name)
+    session = logging.getLogger('session')
+    
+    # Determine the actual well name
+    well_name = _determine_well_name(raw_well_name)
+    well_file = os.path.join(config.project_dir, config.filename_format.format(well_name=well_name))
+
+    message = 'Processing well file "{}"'.format(well_file)
+    print(message)
+    logger.info(message)
+
+    # First, check if the file is within the data limits:
+    params = Parameters()
+    raw_data, _raw_counts = read_original_data(well_file, config.low_conc_cutoff, config.high_conc_cutoff, apply_cutoff=False)
+    valid, min_conc, max_conc = check_if_data_within_limits(raw_data, config.low_conc_cutoff, config.high_conc_cutoff)
+    if not valid:
+        _log_skipped_analysis(session, well_file, config.low_conc, config.high_conc, min_conc, max_conc)
+        _log_skipped_analysis(logger, well_file, config.low_conc, config.high_conc, min_conc, max_conc)
+        return params
+
+    # At this point, we can continue
+    data, counts = apply_cutoff_to_dataframe(raw_data, config.low_conc_cutoff, config.high_conc_cutoff)    
+    params.counts = counts
+    params.well_file = well_name
+    
+    # remove extreme concentration values
+    data = clamp_data(data, config.low_conc_cutoff, config.high_conc_cutoff)
+    params.mean_fret = data['damfret'].mean()
+
+    # plot the fine-grid plots
+    if config.plot_fine_grids:
+        plot_params = dict()
+        plot_params['savepath']         = config.work_dir
+        plot_params['well_name']        = well_name
+        plot_params['fg_conc_edges']    = config.fg_conc_edges
+        plot_params['fg_fret_edges']    = config.fg_fret_edges
+        plot_params['data_df']          = data
+        plot_params['fine_grid_xlim']   = config.fine_grid_xlim
+        plot_params['fine_grid_ylim']   = config.fine_grid_ylim
+        plot_params['plot_type']        = config.plot_type
+        plot_fine_grid_profiles(plot_params)
+
+    conc_fret_averages, slices_histograms = slice_data(data, config.conc_bins, config.fret_bins)
+    average = max(conc_fret_averages[-4:])  # previously from [-4:]
+    _log_conc_FRET_averages(logger, average, conc_fret_averages)
+
+    params.gauss2_loc = average
+    nucleated_fractions, conc_bin_centers, r_squared = calculate_nucleated_fractions(config, well_name, slices_histograms, average)
+
+    conc_bin_centers = np.array(conc_bin_centers)
+    r_squared = np.array(r_squared)
+    params.max_gauss_r2 = np.max(r_squared)
+    
+    # fit a linear function to the R^2 values of the Gauss2 fits across the different slices.
+    linear_func = lambda x, a, b: a*x + b
+    popt, pconv = curve_fit(linear_func, conc_bin_centers, r_squared, bounds=[[-np.inf, -np.inf], [0, np.inf]])
+    linear_func_data = linear_func(conc_bin_centers, *popt)
+    _p, linear_rsquared = calculate_rsquared(linear_func, conc_bin_centers, r_squared, bounds=[[-np.inf, -np.inf], [0, np.inf]])
+
+    if config.plot_rsquared:
+        plot_params = dict()
+        plot_params['savepath']         = config.work_dir
+        plot_params['conc_bin_centers'] = conc_bin_centers
+        plot_params['r_squared']        = r_squared
+        plot_params['linear_func_data'] = linear_func_data
+        plot_params['well_name']        = well_name
+        plot_params['r']                = linear_rsquared
+        plot_params['popt']             = popt
+        plot_params['plot_type']        = config.plot_type
+        plot_linear_rsquared_fit(plot_params)
+
+    # now, analyze the fraction that's nucleated to determine if the system is in one or two-states
+    diff = nucleated_fractions[-1] - np.min(nucleated_fractions)
+    if nucleated_fractions[-1] - np.min(nucleated_fractions) < 0.15:
+        mean_fret = data['damfret'].mean()
+        score = (0.15-diff)/0.15
+        params.score = score
         
-        # compare against the actual data
-        well_file = os.path.join(config.data_dir, config.filename_format.format(well_name=well_name))
-        filename = well_file[:]
-
-        logger.info('Processing filename [{:03d} / {:03d}]: {}'.format(replicate_index + 1, len(genes_table), filename))
-        print('Processing filename [{:03d} / {:03d}]: {}'.format(replicate_index + 1, len(genes_table), filename))
-
-        data, counts = read_original_data(well_file, config.low_conc_cutoff, config.high_conc_cutoff)
-        counted.append(well_file)
-        replicate = len(counted)
-        if len(counted) == config.num_replicates:
-            counted = list()
-        
-        params['counts'].append(counts) # NOT `len(data)` as it has already been pruned
-        params['gene'].append(row.gene)
-        params['well_file'].append(row.well_file)
-        
-        # remove extreme concentration values
-        data = clamp_data(data, config.low_conc_cutoff, config.high_conc_cutoff)
-        params['mean-fret'].append(data['damfret'].mean())
-        
-        # plot the fine-grid plots
-        if config.plot_fine_grids:
-            plot_params = dict()
-            plot_params['savepath']         = config.plots_dir
-            plot_params['well_name']        = well_name
-            plot_params['fg_conc_edges']    = config.fg_conc_edges
-            plot_params['fg_fret_edges']    = config.fg_fret_edges
-            plot_params['data_df']          = data
-            plot_params['fine_grid_xlim']   = config.fine_grid_xlim
-            plot_params['fine_grid_ylim']   = config.fine_grid_ylim
-            plot_params['plot_type']        = config.plot_type
-            plot_fine_grid_profiles(plot_params)
-
-        conc_fret_averages, slices_histograms = slice_data(data, config.conc_bins, config.fret_bins)
-        average = max(conc_fret_averages[-4:])  # previously from [-4:]
-        
-        logger.info('Conc FRET average: {}'.format(average))
-        logger.info('All conc FRET averages: {}'.format(conc_fret_averages))
-        logger.info('Last 4 conc FRET averages: {}'.format(conc_fret_averages[-4:]))
-        params['gauss2-loc'].append(average)
-        nucleated_fractions, conc_bin_centers, r_squared = calculate_nucleated_fractions(config, well_name, slices_histograms, average)
-
-        conc_bin_centers = np.array(conc_bin_centers)
-        r_squared = np.array(r_squared)
-        params['max-gauss-r2'].append(np.max(r_squared))
-        
-        # fit a linear function to the R^2 values of the Gauss2 fits across the different slices.
-        linear_func = lambda x, a, b: a*x + b
-        popt, pconv = curve_fit(linear_func, conc_bin_centers, r_squared, bounds=[[-np.inf, -np.inf], [0, np.inf]])
-        linear_func_data = linear_func(conc_bin_centers, *popt)
-        _p, linear_rsquared = calculate_rsquared(linear_func, conc_bin_centers, r_squared, bounds=[[-np.inf, -np.inf], [0, np.inf]])
-
-        if config.plot_rsquared:
-            plot_params = dict()
-            plot_params['savepath']         = config.plots_dir
-            plot_params['conc_bin_centers'] = conc_bin_centers
-            plot_params['r_squared']        = r_squared
-            plot_params['linear_func_data'] = linear_func_data
-            plot_params['well_name']        = well_name
-            plot_params['r']                = linear_rsquared
-            plot_params['popt']             = popt
-            plot_params['plot_type']        = config.plot_type
-            plot_linear_rsquared_fit(plot_params)
-
-        # now, analyze the fraction that's nucleated to determine if the system is in one or two-states
-        diff = nucleated_fractions[-1] - np.min(nucleated_fractions)
-        if nucleated_fractions[-1] - np.min(nucleated_fractions) < 0.15:
-            mean_fret = data['damfret'].mean()
-            params['construct'].append(row.construct)
-            params['replicate'].append(replicate)
-            params['csat'].append(0)
-            params['csat-slope'].append(0)
-            params['linear-r2'].append(0)
-            params['min-r2-region'].append(0)
-            params['max-r2-region'].append(0)
-            params['min-abs-diff-r2-region'].append(0)
-            params['max-abs-diff-r2-region'].append(0)
-            params['frac-above-csat'].append(0)
-            
-            if mean_fret < 0.05:
-                score = (0.15-diff)/0.15
-                confidence_scores[filename] = ('blue', score)
-                
-                params['color'].append('blue')
-                params['score'].append(score)
-            else:
-                score = (0.15-diff)/0.15
-                confidence_scores[filename] = ('black', score)
-
-                params['color'].append('black')
-                params['score'].append(score)
-            continue  # short-circuit
-
-        # now, fit a logistic function to the data
-        popt, logistic_rs = calculate_rsquared(logistic_func, conc_bin_centers, nucleated_fractions, p0, logistic_bounds)
-        saturation_conc, slope = popt
-        logistic_y = logistic_func(conc_bin_centers, *popt)
-        if config.plot_logistic:
-            plot_params = dict()
-            plot_params['savepath']             = config.plots_dir
-            plot_params['well_name']            = well_name
-            plot_params['conc_bin_centers']     = conc_bin_centers
-            plot_params['nucleated_fractions']  = nucleated_fractions
-            plot_params['logistic_y']           = logistic_y
-            plot_params['r_squared']            = logistic_rs
-            plot_params['popt']                 = popt
-            plot_params['plot_type']            = config.plot_type
-            plot_logistic_fits(plot_params)
-
-        if saturation_conc <= config.low_conc_cutoff:
-            score = (0.15-diff)/0.15
-            confidence_scores[filename] = ('black', 1.00)
-
-            params['construct'].append(row.construct)
-            params['replicate'].append(replicate)
-            params['csat'].append(saturation_conc)
-            params['csat-slope'].append(slope)
-            params['linear-r2'].append(0)
-            params['min-r2-region'].append(0)
-            params['max-r2-region'].append(0)
-            params['min-abs-diff-r2-region'].append(0)
-            params['max-abs-diff-r2-region'].append(0)
-            params['frac-above-csat'].append(0)
-            params['color'].append('black')
-            params['score'].append(1.0)
-            continue
-        
-        logger.info('Saturation concentration: {}'.format(saturation_conc))
-        
-        if saturation_conc < max(conc_bin_centers):
-            region_indices = np.where((conc_bin_centers >= saturation_conc - 1.0) & (conc_bin_centers <= saturation_conc + 1.0))
-            logger.info('Saturation concentration type: lesser')
+        if mean_fret < 0.05:
+            params.color = 'blue'    
         else:
-            indices = list(range(len(conc_bin_centers)))
-            region_indices = indices[-5:]
-            logger.info('Saturation concentration type: greater')
+            params.color = 'black'
+        _log_class_and_score(session, well_file, params.color, params.score, output=False)
+        _log_class_and_score(logger, well_file, params.color, params.score)
+        return params
 
-        region_lower = np.where(conc_bin_centers >= saturation_conc)
-        region_upper = np.where(conc_bin_centers <= saturation_conc)
-        
-        logger.info('Rregion Indices: {}'.format(region_indices))
-        logger.info('Region lower: {}'.format(region_lower))
-        logger.info('Region upper: {}'.format(region_upper))
-        logger.info('Concentration bin centers at region lower: {}'.format(conc_bin_centers[region_lower]))
-        logger.info('Concentration bin centers at region upper: {}'.format(conc_bin_centers[region_upper]))
-        logger.info('Concentration bin centers using region indices: {}'.format(conc_bin_centers[region_indices]))
-        
-        # determine if there is a large change in the fit goodness in this region. And, determine the max change in
-        # fit goodness around the saturation concentration.
-        region_r_squared = r_squared[region_indices]
-        logger.info('Region R^2: {}'.format(region_r_squared))
-        fit_value = np.max(np.abs(np.diff(region_r_squared)))
-        
-        params['construct'].append(row.construct)
-        params['replicate'].append(replicate)
-        params['csat'].append(saturation_conc)
-        params['csat-slope'].append(slope)
-        params['linear-r2'].append(linear_rsquared)
-        params['min-r2-region'].append(np.min(region_r_squared))
-        params['max-r2-region'].append(np.max(region_r_squared))
-        params['min-abs-diff-r2-region'].append(np.min(np.abs(np.diff(region_r_squared))))
-        params['max-abs-diff-r2-region'].append(np.max(np.abs(np.diff(region_r_squared))))
-        
-        # check for noisy data that hasn't fully phase separated
-        upper_conc_limit = config.high_conc_cutoff - 1
-        if saturation_conc <= upper_conc_limit:
-            df = data[data['concentration'] > saturation_conc].dropna()
-        else:
-            df = data[data['concentration'] > upper_conc_limit].dropna()
-        df = df[df['damfret'] > 0.05].dropna()
+    # Now, fit a logistic function to the data
+    popt, logistic_rs = calculate_rsquared(logistic_func, conc_bin_centers, nucleated_fractions, p0, logistic_bounds)
+    saturation_conc, slope = popt
+    logistic_y = logistic_func(conc_bin_centers, *popt)
+    if config.plot_logistic:
+        plot_params = dict()
+        plot_params['savepath']             = config.work_dir
+        plot_params['well_name']            = well_name
+        plot_params['conc_bin_centers']     = conc_bin_centers
+        plot_params['nucleated_fractions']  = nucleated_fractions
+        plot_params['logistic_y']           = logistic_y
+        plot_params['r_squared']            = logistic_rs
+        plot_params['popt']                 = popt
+        plot_params['plot_type']            = config.plot_type
+        plot_logistic_fits(plot_params)
 
-        total_points = len(data)
-        df_points = len(df)
-        fraction_above_csat = df_points/total_points
-        params['frac-above-csat'].append(fraction_above_csat)
+    # This is the final check for black.
+    if saturation_conc <= config.low_conc_cutoff:
+        score = (0.15-diff)/0.15
         
-        color, score = determine_class(df_points, fraction_above_csat, diff, fit_value, region_r_squared, linear_rsquared)
-        confidence_scores[filename] = (color, score)
-        params['color'].append(color)
-        params['score'].append(score)
-    logger.info('End classification calculations.')
+        params.csat = saturation_conc
+        params.csat_slope = slope
+        params.color = 'black'
+        params.score = 1.0
+        _log_class_and_score(session, well_file, params.color, params.score, output=False)
+        _log_class_and_score(logger, well_file, params.color, params.score)
+        return params
+    
 
-    confidence_scores_savename = os.path.join(config.work_dir, 'confidence-scores.npy')
-    np.save(confidence_scores_savename, confidence_scores, allow_pickle=True)
+    logger.info('Saturation concentration: {}'.format(saturation_conc))
+    if saturation_conc < max(conc_bin_centers):
+        region_indices = np.where((conc_bin_centers >= saturation_conc - 1.0) & (conc_bin_centers <= saturation_conc + 1.0))
+        logger.info('Saturation concentration type: lesser')
+    else:
+        indices = list(range(len(conc_bin_centers)))
+        region_indices = indices[-5:]
+        logger.info('Saturation concentration type: greater')
 
-    params_savename = os.path.join(config.work_dir, 'parameters.tsv')
-    params = pd.DataFrame(params)
-    params.to_fwf(params_savename)
+    region_lower = np.where(conc_bin_centers >= saturation_conc)
+    region_upper = np.where(conc_bin_centers <= saturation_conc)
+    _log_region_values(logger, region_indices, region_lower, region_upper, conc_bin_centers)
+    
+    # determine if there is a large change in the fit goodness in this region. And, determine the max change in
+    # fit goodness around the saturation concentration.
+    region_r_squared = r_squared[region_indices]
+    logger.info('Region R^2: {}'.format(region_r_squared))
+    fit_value = np.max(np.abs(np.diff(region_r_squared)))
+    
+    params.csat = saturation_conc
+    params.csat_slope = slope
+    params.linear_r2 = linear_rsquared
+    params.min_r2_region = np.min(region_r_squared)
+    params.max_r2_region = np.max(region_r_squared)
+    params.min_abs_diff_r2_region = np.min(np.abs(np.diff(region_r_squared)))
+    params.max_abs_diff_r2_region = np.max(np.abs(np.diff(region_r_squared)))
+    
+    # check for noisy data that hasn't fully phase separated
+    upper_conc_limit = config.high_conc_cutoff - 1
+    if saturation_conc <= upper_conc_limit:
+        df = data[data['concentration'] > saturation_conc].dropna()
+    else:
+        df = data[data['concentration'] > upper_conc_limit].dropna()
+    df = df[df['damfret'] > 0.05].dropna()
 
-    time.sleep(10)
+    total_points = len(data)
+    df_points = len(df)
+    fraction_above_csat = df_points/total_points
+    params.frac_above_csat = fraction_above_csat
+    
+    color, score = determine_class(df_points, fraction_above_csat, diff, fit_value, region_r_squared, linear_rsquared)
+    params.color = color
+    params.score = score
+
+    _log_class_and_score(session, well_file, color, score, output=False)
+    _log_class_and_score(logger, well_file, color, score)
+    message = 'Processing complete for well file "{}"'.format(well_name)
+    print(message)
+    logger.info(message)
+    return params
+
+
+def _write_session_log_header(config):
+    session_log = logging.getLogger('session')
+    wells_table = pd.read_csv(config.wells_filename)
+
+    insert_section_separator(session_log)
+    session_log.info('')
+    session_log.info('Session started on: {}'.format(datetime.now()))
+    session_log.info('Number of wells to be analyzed: {}'.format(len(wells_table['well_file'])))
+    session_log.info('')
+    insert_section_separator(session_log)
+    session_log.info('')
+    session_log.info('SETTINGS OVERVIEW')
+    session_log.info('')
+
+    # First, output all values of the important variables:
+    settings = load_settings(config.settings_filename)
+    for setting_name in settings:
+        value = settings[setting_name]
+        auto = ''
+        if setting_name == 'random_seed' and value is None:
+            value = getattr(config, 'random_seed')
+            auto = '(auto-populated)'
+        elif setting_name == 'num_processes' and value is None:
+            value = getattr(config, 'num_processes')
+            auto = '(auto-populated)'
+        elif setting_name == 'minimum_required_measurements':
+            value = getattr(config, 'min_measurements')
+        elif setting_name == 'work_directory' and value is None:
+            value = getattr(config, 'work_dir')
+            auto = '(auto-populated)'
+        elif setting_name == 'logs_directory' and value is None:
+            value = getattr(config, 'logs_dir')
+            auto = ' (auto-populated)'
+        
+        v = value
+        if type(value) is str:
+            v = '"{}"'.format(value)
+        
+        session_log.info('{setting}: {value} {gen_method}'.format(setting=setting_name, value=v, gen_method=auto))
+    session_log.info('')
+    insert_section_separator(session_log)    
+    session_log.info('')
+
+
+def classify_datasets(config):
+    # Setup the logger for use
+    start_time = datetime.now()
+    iso_time = start_time.strftime('%Y-%m-%d_%H-%M-%S')
+    session_log_filename = os.path.join(config.work_dir, 'session---%s.log' % iso_time)
+    setup_logger('session', session_log_filename)
+    session_log = logging.getLogger('session')
+    _write_session_log_header(config)
+    
+    session_log.info('BEGIN ANALYSIS')
+    session_log.info('')
+
+    wells_table = pd.read_csv(config.wells_filename)
+
+    function_args = list()
+    for _index, row in wells_table.iterrows():
+        raw_well_name = str(row['well_file'])
+        args = (config, raw_well_name)
+        function_args.append(args)
+
+    results = parallelize(classify_dataset, function_args, config.num_processes)
+
+    session_log.info('')
+    session_log.info('ANALYSIS COMPLETE')
+    session_log.info('')
+    insert_section_separator(session_log)
+    session_log.info('')
+    session_log.info('SUMMARY')
+    session_log.info('')
+
+    # check for which wells were skipped.
+    parameter_fields = (
+        'gene construct replicate well_file counts mean_fret gauss2_loc ' \
+        'csat csat_slope linear_r2 max_gauss_r2 min_r2_region max_r2_region ' \
+        'min_abs_diff_r2_region max_abs_diff_r2_region frac_above_csat color score'
+    )
+    
+    fields = parameter_fields.split()
+
+    # Prepare the `pandas.DataFrame` for use.
+    output = OrderedDict()
+    for field in fields:
+        output[field] = list()
+    
+    skipped = list()
+    for fargs in results:
+        raw_well_file = fargs[1]
+        params, _start_time, _stop_time = results[fargs]
+        if params.counts == 0 and params.score == 0 and params.color == 'N/A':
+            skipped.append(raw_well_file)
+
+        for field in fields:
+            col = getattr(params, field)
+            output[field].append(col)
+
+    skipped_dfs = list()
+    for skipped_well in skipped:
+        df = wells_table[wells_table['well_file'] == skipped_well].dropna()
+        skipped_dfs.append(df)
+    if len(skipped_dfs) > 0:
+        skipped_df = pd.concat(skipped_dfs)
+        skipped_df.reset_index(drop=True, inplace=True)
+        skipped_savepath_tsv = os.path.join(config.project_dir, 'skipped.tsv')
+        skipped_savepath_csv = os.path.join(config.project_dir, 'skipped.csv')
+        to_fwf(skipped_df, skipped_savepath_tsv)
+        skipped_df.to_csv(skipped_savepath_csv)
+        session_log.info('Skipped well files exported as: "{}"'.format(skipped_savepath_tsv))
+        session_log.info('Skipped well files exported as: "{}"'.format(skipped_savepath_csv))
+
+    output_df = pd.DataFrame(output)
+    parameters_savepath_tsv = os.path.join(config.project_dir, 'parameters.tsv')
+    parameters_savepath_csv = os.path.join(config.project_dir, 'parameters.csv')
+    to_fwf(output_df, parameters_savepath_tsv)
+    output_df.to_csv(parameters_savepath_csv)
+    session_log.info('Classifications and scores exported as: "{}"'.format(parameters_savepath_tsv))
+    session_log.info('Classifications and scores exported as: "{}"'.format(parameters_savepath_csv))
+    session_log.info('')
+
+    total_wells = len(wells_table['well_file'])
+    skipped_wells = len(skipped)
+    analyzed_wells = total_wells - skipped_wells
+    stop_time = datetime.now()
+    processing_time = stop_time - start_time
+
+    session_log.info('')
+    session_log.info('Number of wells to analyze:       {}'.format(total_wells))
+    session_log.info('Number of wells analyzed:         {}'.format(analyzed_wells))
+    session_log.info('Number of wells skipped:          {}'.format(skipped_wells))
+    session_log.info('Processing time completed on:     {}'.format(stop_time))
+    session_log.info('Total processing time:            {}'.format(processing_time))
+    session_log.info('')
+    insert_section_separator(session_log)

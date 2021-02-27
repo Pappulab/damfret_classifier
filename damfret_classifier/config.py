@@ -1,4 +1,6 @@
 import numpy as np
+import logging
+import multiprocessing as mp
 from pathlib import Path
 from datetime import datetime
 from damfret_classifier.utils import load_settings
@@ -31,8 +33,9 @@ class Config(object):
         self.min_measurements   = kwargs.get('minimum_required_measurements',   0)
 
         # Important files and directories
-        self.work_dir           = kwargs.get('work_directory',                  None)
         self.project_dir        = kwargs.get('project_directory',               None)
+        self.work_dir           = kwargs.get('work_directory',                  None)
+        self.logs_dir           = kwargs.get('logs_directory',                  None)
         self.filename_format    = kwargs.get('filename_format',                 None)
         self.wells_filename     = kwargs.get('wells_filename',                  None)
 
@@ -92,22 +95,38 @@ class Config(object):
         return s
 
 
-    def _create_directory_if_not_exists(self, directory, default_name, timestamp_string):
+    def _create_directory_if_not_exists(self, directory, default_name, timestamp_string, save_in_project_dir=True):
+        session_log = logging.getLogger('session')
         if directory is not None:
             path = Path(directory)
             if not path.exists():
-                print('Warning: {} path "{}" not found. This path will be created.'.format(default_name, path))
+                message1 = 'Warning: {} path "{}" not found. This path will be created.'.format(default_name, path)
+                message2 = 'User-specified {} directory created: "{}".'.format(default_name, path)
+                
                 path.mkdir(parents=True, exist_ok=False)
-                print('User-specified {} directory created: "{}".'.format(default_name, path))
+
+                print(message1)
+                print(message2)
+                session_log.info(message1)
+                session_log.info(message2)
 
             if not path.is_dir():
                 raise RuntimeError('The supplied path: "{}" is not a directory. Exiting.'.format(path))
         else:
             name = '{}---{}'.format(default_name, timestamp_string)
-            path = Path(Path.cwd(), name)
+
+            # Determine whether or not to save the the directory under the project root.
+            if not save_in_project_dir:
+                path = Path(Path.cwd(), name)
+            else:
+                path = Path(self.project_dir, name)
+            
+            message3 = 'Default {} directory created: "{}".'.format(default_name, path)
             try:
                 path.mkdir(parents=True, exist_ok=False)
-                print('Default {} directory created: "{}".'.format(default_name, path))
+                
+                print(message3)
+                session_log.info(message3)
             except FileExistsError:
                 raise RuntimeError('Could not create default {} path: "{}". Directory already exists.'.format(default_name, path))
         return path
@@ -134,6 +153,11 @@ class Config(object):
         if fret_diff <= 0:
             raise RuntimeError('The `low_fret` cannot be >= `high_fret`.')
 
+    
+    def _validate_nice_level(self):
+        if self.nice_level > 20 or self.nice_level < -20:
+            raise RuntimeError('The nice level can only be between -20 (highest) and 19 (lowest).')
+
 
     def _validate_plot_type(self):
         if self.plot_type is None:
@@ -149,9 +173,23 @@ class Config(object):
         # Check for work path existence. Create if not found.
         now_str = self._now_timestamp()
         self.work_dir = str(self._create_directory_if_not_exists(self.work_dir, 'work', now_str))
+        self.logs_dir = str(self._create_directory_if_not_exists(self.logs_dir, 'logs', now_str))
 
         if self.project_dir is None:
-            raise RuntimeError('No data directory `project_directory` has been supplied in the settings. Exiting.')
+            raise RuntimeError('No `project_directory` has been supplied in the settings. Exiting.')
+
+    
+    def _validate_num_processes(self):
+        available_processes = mp.cpu_count()
+
+        if self.num_processes is None:
+            self.num_processes = available_processes
+
+        if type(self.num_processes) is not int:
+            raise RuntimeError('Only integer processes can be used.')
+
+        if self.num_processes > available_processes:
+            raise RuntimeWarning('Warning: requesting more processes than available virtual CPUs. Performance may be degraded.')
 
 
     def _validate_filename_format(self):
@@ -187,6 +225,12 @@ class Config(object):
 
         self._check_limits_var('fine_grid_xlim')
         self._check_limits_var('fine_grid_ylim')
+
+        # Check that the nice level is within the allowed limits (-20 to 19)
+        self._validate_nice_level()
+
+        # Check that the number of requested processes is valid. Set a valid number accordingly.
+        self._validate_num_processes()
 
         # Check that the filename_format is not Null.
         self._validate_filename_format()
@@ -229,8 +273,9 @@ class Config(object):
         self.min_measurements   = c['minimum_required_measurements']
 
         # Important files and directories
-        self.work_dir           = c['work_directory']
         self.project_dir        = c['project_directory']
+        self.work_dir           = c['work_directory']
+        self.logs_dir           = c['logs_directory']
         self.filename_format    = c['filename_format']
         self.wells_filename     = c['wells_filename']
         
@@ -253,7 +298,7 @@ class Config(object):
         params += 'low_conc,high_conc,low_fret,high_fret'.split(',')
         params += 'low_conc_cutoff,high_conc_cutoff,conc_bin_width,fret_bin_width'.split(',')
         params += 'number_of_bins_xy,min_measurements'.split(',')
-        params += 'work_dir,project_dir,filename_format,wells_filename'.split(',')
+        params += 'project_dir,work_dir,logs_dir,filename_format,wells_filename'.split(',')
         params += 'plot_gaussian,plot_logistic,plot_fine_grids,plot_rsquared'.split(',')
         params += 'plot_skipped,fine_grid_xlim,fine_grid_ylim,plot_type'.split(',')
 

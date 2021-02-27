@@ -60,6 +60,9 @@ class Parameters(object):
         max_abs_diff_r2_region  (float) The absolute value of the max n-th discrete difference.
                                 Used primarly for debugging and fine-tuning the algorithm.
                                 See: https://numpy.org/doc/stable/reference/generated/numpy.diff.html
+
+        frac_above_csat         (float) The fraction of points in the high concentration and high
+                                FRET arm that are above the saturation concentration.
         
         color                   (str) The phase-separation classification. Possible values
                                 are:
@@ -89,5 +92,6 @@ class Parameters(object):
     max_r2_region           = 0.0
     min_abs_diff_r2_region  = 0.0
     max_abs_diff_r2_region  = 0.0
+    frac_above_csat         = 0.0
     color                   = 'N/A'
     score                   = 0.0
