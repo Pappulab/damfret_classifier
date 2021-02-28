@@ -1,33 +1,99 @@
 #!/usr/bin/env python3
 import os
+import sys
 import pandas as pd
 import pkgutil
+import yaml
+import shutil
+import signal
+from pathlib import Path
+from datetime import datetime
 from argparse import ArgumentParser
-from damfret_classifier.config import Config
 from damfret_classifier.analyze import classify_datasets
-from damfret_classifier.utils import load_settings, create_genes_table, remove_genes_and_replicates_below_count
-from damfret_classifier.utils import validate_gene_replicates, to_fwf
+from damfret_classifier.config import Config
+from damfret_classifier.utils import generate_default_config, load_settings, determine_if_manioc_project
+from damfret_classifier.utils import validate_manioc_directory_tree
 
 
 script_description = (
     'This is a Python package for classifying DAmFRET data based on supervised learning. ' \
-    'The data can also be analyzed to determine mechanistic inferences regarding nucleation of ordered assemblies.'
+    'The data can also be analyzed to determine mechanistic inferences regarding nucleation of ordered assemblies. ' \
 )
+
+
+def shutdown(signal_number, frame):
+    """A utility function to handle `Ctrl-C` via the command-line."""
+    print('Shut down requested. Terminating process.')
+    sys.exit(0)
+
+
+def shutdown_not_suspend(signal_number, frame):
+    """A helper function to handle `Ctrl-Z` via the command-line."""
+    print('Suspend not supported. Shutting down instead. Terminating process.')
+    sys.exit(0)
+
+
+def get_or_generate_random_seed(yaml_settings):
+    """Extract or generate a random seed from the YAML settings."""
+    seed = yaml_settings['random_seed']
+    if seed is None:
+        seed = int(datetime.now().timestamp())
+    return seed
 
 
 def main():
     parser = ArgumentParser('classify_damfret', description=script_description)
-    parser.add_argument('config', help='The YAML config file to use.', type=str)
+    parser.add_argument('-c', '--config', help='The YAML config file to use (default `config.yaml`).', type=str, default='config.yaml')
+    parser.add_argument('-g', '--generate-default-config', help='Generate a default YAML config file which can be adapted.', action='store_true')
     args = parser.parse_args()
-    
-    print('Loading settings...')
+
+    # Generate the default config and exit.
+    if args.generate_default_config:
+        generate_default_config()
+        path = os.getcwd()
+        print('YAML config file generated and saved to: "{}". Exiting.'.format(path))
+        sys.exit(0)
+
+    # Otherwise, we have two choices: analyze a MANIOC analysis or non-MANIOC dataset.
     settings = load_settings(args.config)
+    is_manioc, _dirs = determine_if_manioc_project(settings['project_directory'])
 
-    print('Loading config...')
-    config = Config(args.config)
+    if is_manioc:
+        manioc_analysis_paths   = list()
+        project_directory       = settings['project_directory']
+        wells_filename          = settings['wells_filename']
+        random_seed             = get_or_generate_random_seed(settings)
+        manioc_analysis_paths   = validate_manioc_directory_tree(project_directory)
+        project_directory_path  = Path(project_directory).expanduser().absolute()
+        wells_table_filename    = project_directory_path.joinpath(wells_filename).expanduser().absolute()
+        
+        for index, manioc_project_path in enumerate(manioc_analysis_paths, start=1):
+            # Update the project directory to the specific plate. This allows us the ability to analyze
+            # each plate in succession using the base config filename that was input (i.e. `args.config`).
+            new_settings = settings.copy()
+            new_settings['session_name']        = '{}_{}'.format(settings['session_name'], index)
+            new_settings['project_directory']   = str(manioc_project_path)
+            new_settings['random_seed']         = random_seed
+            project_settings_filename           = manioc_project_path.joinpath('damfret_classifier_settings.yaml')
+            project_wells_table_filename        = manioc_project_path.joinpath(wells_filename).expanduser().absolute()
 
-    # more to add soon...
+            # Output the new config, and copy over the plasmid table. Doing this simplifies the development
+            # as a new parameter / argument would have to be supported.
+            with open(project_settings_filename, 'w') as sfile:
+                yaml.dump(new_settings, sfile)
+            shutil.copyfile(wells_table_filename, project_wells_table_filename)
+
+            # Ready to begin analysis. This design is preferred as it allows a single
+            # entry point for different project layouts.
+            print('Analyzing MANIOC Output ({} / {})'.format(index, len(manioc_analysis_paths)))
+            classify_datasets(project_settings_filename, move_to_project_root=True)
+    else:
+        # This is a non-MANIOC analysis run.
+        classify_datasets(args.config)
 
 
 if __name__ == '__main__':
+    # register the signals to be caught
+    signal.signal(signal.SIGTSTP,   shutdown_not_suspend)   # Ctrl-Z
+    signal.signal(signal.SIGINT,    shutdown)               # Ctrl-C
     main()

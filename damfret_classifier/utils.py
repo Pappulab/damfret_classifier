@@ -17,8 +17,8 @@ from scipy.optimize import curve_fit
 __all__ = ['load_raw_synthetic_data', 'load_manuscript_classifications', 'create_directory_if_not_exist', 'shannon_entropy',
            'load_settings', 'read_original_data', 'remove_genes_and_replicates_below_count', 'validate_gene_replicates',
            'create_genes_table', 'start_process', 'initialize_pool', 'parallelize', 'generate_default_config', 'to_fwf',
-           'clamp_data', 'find_subdirectories', 'read_manioc_config', 'validate_directory_tree', 
-           'check_if_data_within_limits', 'parse_manioc_timestamp']
+           'clamp_data', 'find_subdirectories', 'read_manioc_config', 'validate_manioc_directory_tree', 
+           'check_if_data_within_limits', 'parse_manioc_timestamp', 'determine_if_manioc_project']
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -181,7 +181,7 @@ def parse_manioc_timestamp(time_str):
     return parsed, datetime_obj 
 
 
-def validate_directory_tree(pathname):
+def validate_manioc_directory_tree(pathname):
     """This function checks and verifies the existences of the `manioc.results` sub-directories as read from the
     input `manioc.config` filename. If the required sub-directories are not found, the program raises an error
     and exits.
@@ -192,10 +192,8 @@ def validate_directory_tree(pathname):
 
     If this succeeds, subsequent analysis can proceed.
     """
-    path        = os.path.expanduser(pathname)
-    root_path   = Path(path)
-
     # Read in the MANIOC config and consult its variables for use.
+    root_path           = Path(pathname).expanduser().absolute()
     manioc_path         = root_path.joinpath('manioc.config')
     manioc_config       = read_manioc_config(manioc_path)
     manioc_results_root = root_path.joinpath(manioc_config['resultsDir'], manioc_config['rawDir'])
@@ -208,7 +206,7 @@ def validate_directory_tree(pathname):
     # since the value could change; `manioc.results` appears to be fixed.
     raw_dir                 = str(Path(manioc_config['rawDir']))
     required_directories    = '{raw_dir},manioc.results'.format(raw_dir=raw_dir)
-    subdirectories          = find_subdirectories(path)
+    subdirectories          = find_subdirectories(root_path)
     required_subdirectories = {p:root_path.joinpath(p) for p in required_directories.split(',')}
 
     # Check that the required base subdirectories are found in the search path.
@@ -236,7 +234,7 @@ def validate_directory_tree(pathname):
     
     paths_of_interest = list()
     for relative_path in relative_paths:
-        manioc_results_path = manioc_results_root.joinpath(relative_path)
+        manioc_results_path = manioc_results_root.joinpath(relative_path).resolve()
         if not manioc_results_path.exists():
             raise RuntimeError('Required MANIOC results directory not found: "{}".'.format(manioc_results_path))
 
@@ -246,6 +244,32 @@ def validate_directory_tree(pathname):
         if parsed:
             paths_of_interest.append(manioc_results_path)
     return paths_of_interest
+
+
+def determine_if_manioc_project(project_directory):
+    """This function determines if a supplied path to a `project_directory` contains MANIOC output. This is done
+    by checking for the existence of `'manioc.results'` and `'raw_data'` sub-directories. If these are present
+    the directory is a MANIOC project.
+    
+    @param project_directory (str): The name of the project directory to check.
+    @return tuple:                  A 2-tuple corresponding to whether or not the directory has a MANIOC layout,
+                                    and, a list of the immediate sub-directories located in the provided project
+                                    directory.
+    """
+    project_dir = Path(project_directory).expanduser().resolve()
+    contains_manioc_results = False
+    contains_raw_data = False
+    immediate_sub_directories = list()
+    for name in os.listdir(project_dir):
+        path = os.path.join(project_dir, name)
+        if os.path.isdir(path):
+            immediate_sub_directories.append(path)
+            if 'manioc.results' in name:
+                contains_manioc_results = True
+            elif 'raw_data' in name:
+                contains_raw_data = True
+    valid = contains_manioc_results and contains_raw_data
+    return valid, immediate_sub_directories
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -529,30 +553,32 @@ def create_genes_table(config, plasmid_csv_filename, savename):
 # Parallelization utils
 
 
-def start_process():
+def start_process(session_name):
     """This is just a notifier function to indicate that a worker process has been launched. 
     Since this is meant for a pool, the pool reuses these processes."""
-    print('Starting', mp.current_process().name)
+    session_log = logging.getLogger(session_name)
+    session_log.info('Starting :: {}'.format(mp.current_process().name))
 
 
-def initialize_pool(num_processes, initializer_function):
+def initialize_pool(num_processes, initializer_function, session_name):
     """Initialize a multiprocessing pool based on the number of requested processes and
     some initializer function which is used primarily for notification."""
     num_procs = num_processes
     if num_processes is None:
         num_procs = mp.cpu_count()
     
-    pool = mp.Pool(processes=num_procs, initializer=initializer_function)
+    pool = mp.Pool(processes=num_procs, initializer=initializer_function, initargs=(session_name,))
     return pool
 
 
-def parallelize(func, list_of_func_args, num_processes=None):
+def parallelize(func, list_of_func_args, num_processes=None, session_name=None):
     """This function parallelizes calling a function with different argument values.
 
     @param func (func):                 The function reference which will be called.
     @param num_repeats (int):           The number of times to call the function.
     @param func_args (tuple | list):    The arguments to pass to the function call.
     @param num_processes (int):         The number of processes to use (default = all).
+    @param session_name (str):          The session name / log that will be written to.
 
     @returns results (OrderedDict):     A dictionary of function arguments as keys, and
     a values of 2-tuples comprised of datetime instances and the function result. Note:
@@ -562,7 +588,7 @@ def parallelize(func, list_of_func_args, num_processes=None):
     Notes: calling the `ApplyAsync` object's get (`result.get()`) here will block, which
     defeats the entire purpose behind this configuration.
     """
-    pool = initialize_pool(num_processes, start_process)
+    pool = initialize_pool(num_processes, start_process, session_name)
     
     results = OrderedDict()
     for func_args in list_of_func_args:

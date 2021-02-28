@@ -1,3 +1,11 @@
+# The name of this session. This variable is only used for the uniquely
+# identifying the log files when multiple datasets are analyzed at once, 
+# as in a MANIOC directory layout. In such a layout, each subsequent
+# plate is appended with a numerical non-zero index which will specifically
+# identify the session internally.
+session_name: default
+
+
 # If no random seed is defined for reproducibility, one will be set
 # and reported to the user in the log file.
 random_seed: Null
@@ -8,14 +16,21 @@ random_seed: Null
 # resources. If more processes are requested than available, the system will
 # automatically set the number of processes to what's available to avoid
 # performance degradation.
+#
+# If this is set to `Null`, the maximum number of available CPUs will
+# be determined and used. For e.g. a quad-core CPU (no-hyper-threading)
+# will result in 4 processes being simultaneously generated for use. If the
+# cpu is dual-core but supports hyper-threading (i.e. virtual CPUs), then
+# the number of processes generated will also be 4.
 num_processes: 1
 
 
 # This effectively sets the priority of the child process to the lowest.
 # Useful if the number of processes approaches or exceeds the number of
 # processes available to the system as using all the processes by default
-# at its default nice level can overwhelm the system and degrade 
-# performance.
+# at their default nice level can overwhelm the system and degrade 
+# performance overall. In some cases this can slow down the overall
+# analysis.
 #
 # Nice levels range from -20 (highest / realtime) to 19 (lowest). The
 # default "nice-level" of processes are usually 0. Low nice-levels are good
@@ -24,9 +39,15 @@ num_processes: 1
 nice_level: 19
 
 
-# The location of the DAmFRET project containing `raw_data` and `manioc.results`/
+# The location of the DAmFRET project that contains the gated FCS data.
 # Will be checked at runtime. Requires a non-null argument.
-project_directory: Null
+#
+# If this is a MANIOC project directory (see `damfret_classifer.utils`), 
+# only the path to the parent directory containing `manioc.results` is
+# required as the program will automatically search the directory tree.
+#
+# This path can also be relative. For e.g. `'.'`.
+project_directory: .
 
 
 # A CSV file containing the well files which will be examined. If a relative
@@ -35,8 +56,8 @@ project_directory: Null
 # `wells_filename` is "wells.csv", this means that the actual path of 
 # filename on the filesystem is actually: `/tmp/20cy148.damfret/wells.csv`.
 #
-# If an absolute path is provided (external or internal to the `project_directory`
-# that path will be used.
+# If an absolute path is provided (external or internal to the 
+# `project_directory`) that path will be used.
 #
 # The purpose of this design is such that the user can directly refer to a
 # CSV list which can be consulted on which well files should be analyzed.
@@ -48,30 +69,34 @@ project_directory: Null
 wells_filename: Null
 
 
-# The format of the gated FCS filenames in the `manioc.results` directory. 
+# The format of the gated FCS filenames in the `project_directory`. 
 # This name can be anything, but must contain `{well_name}` in its filename.
 # For e.g. `'{well_name}.csv'`. Cannot be null.
 filename_format: '{well_name}.fcs.csv'
 
 
-# The location where the parameters and numpy arrays will be saved.
+# The location where the parameters and session log will be saved.
+#
 # If `Null`, a default directory called `work---<YYYY-mm-DD_HH-MM-SS>` will 
 # be created. `Null` is the default and preferred option as it isolates
 # each run.
 work_directory: Null
 
 
-# The location where the intermediate log files will be created. If `Null`, 
-# a default directory called `logs---<YYYY-mm-DD_HH-MM-SS>` will be created. 
-# `Null` is the default and preferred option as it isolates each run.
+# The location where the intermediate log files will be created. 
+#
+# If `Null`, a default directory called `logs---<YYYY-mm-DD_HH-MM-SS>` will 
+# be created. `Null` is the default and preferred option as it isolates 
+# each run.
 logs_directory: Null
 
 
 # Skip the analysis of files (usually gated well files) containing less 
 # than this number of measurements. These files will be marked as N/A
-# in the final collated parameter file. This number is determined by 
-# analyzing the Shannon entropy of the dataset. See the SI of the 
-# DAmFRET manuscript for more.
+# in the final collated parameter file. 
+#
+# This number is determined by analyzing the Shannon entropy of the 
+# dataset. See the SI of the DAmFRET manuscript for more.
 minimum_required_measurements: 20000
 
 
@@ -145,7 +170,9 @@ number_of_bins: 300
 # 5) For data that is not within the effective limits and are
 #    skipped for subsequent analysis, it could be useful to examine 
 #    the profiles thereof and use that to determine what the effective
-#    range should be.
+#    range should be. Note that the limits are auto-calculated
+#    and not referenced from those provided in `xlim_2d_histogram`
+#    and `ylim_2d_histogram`.
 plot_2d_histograms: True
 plot_gaussian_fits: True
 plot_logistic_fits: True

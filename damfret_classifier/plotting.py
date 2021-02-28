@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import matplotlib.font_manager
 from damfret_classifier.utils import create_directory_if_not_exist, shannon_entropy
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
@@ -193,12 +194,11 @@ def analyze_shannon_entropy(config, constructs_df, genes, replicates, descriptio
     if len(genes) > len(markers):
         raise RuntimeError('Only a maximum of {} replicates can be plotted simulataneously.'.format(len(markers)))
 
-    ylolim = config.low_fret
-    yuplim = config.high_fret
-    xlolim = config.low_conc
-    xuplim = config.high_conc
-
-    bins = 10**np.log10(np.logspace(1, 4, 10))
+    ylolim  = config.low_fret
+    yuplim  = config.high_fret
+    xlolim  = config.low_conc
+    xuplim  = config.high_conc
+    bins    = 10**np.log10(np.logspace(1, 4, 10))
     
     fig = plt.figure(figsize=(16, 8))
     axes = fig.subplots(1, 2)
@@ -224,13 +224,13 @@ def analyze_shannon_entropy(config, constructs_df, genes, replicates, descriptio
             entropy = shannon_entropy(hist)
             entropies.append(entropy)
         
-        marker = markers[index]
-        bin_widths = (xuplim - xlolim)/np.array(bins)
+        marker      = markers[index]
+        bin_widths  = (xuplim - xlolim)/np.array(bins)
         axes[0].semilogx(bins, entropies, marker, linestyle=':', label='%s replicate %d (%s)' % (genes[index], replicate, descriptions[index]))
         
-        xx = np.log10(bin_widths)
-        yy = entropies[::]
-        dydx = np.diff(yy)/np.diff(xx)
+        xx      = np.log10(bin_widths)
+        yy      = entropies[::]
+        dydx    = np.diff(yy)/np.diff(xx)
         
         # See: https://stackoverflow.com/a/26042315/866930
         dydx = np.gradient(entropies, xx)

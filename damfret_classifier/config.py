@@ -12,8 +12,14 @@ class Config(object):
     other modules.
     """
     def __init__(self, settings_filename=None, **kwargs):
+        """The main entry point and initializer. This is configured such that one can
+        directly create the object from another config object by passing and populating
+        the relevant parameter via the `kwargs` dictionary. This design is most useful
+        when debugging."""
+
         # Book-keeping data
         self.settings_filename  = settings_filename
+        self.session_name       = kwargs.get('session_name',                    'session')
 
         # Job control parameters
         self.random_seed        = kwargs.get('random_seed',                     None)
@@ -65,6 +71,8 @@ class Config(object):
 
 
     def _check_if_null(self, parameter):
+        """Used during validation as a number of parameters, mainly those which are auto-generated 
+        using the provided limits (i.e. bins), should not be `None` (the default)."""
         value = getattr(self, parameter)
         if value is None:
             message = """Parameter "{}" has not been initialized.
@@ -73,6 +81,7 @@ class Config(object):
 
 
     def _check_if_zero(self, parameter):
+        """Used during validation as there are a few parameters which should be non-zero."""
         value = getattr(self, parameter)
         if type(value) is int:
             if value == 0:
@@ -83,6 +92,7 @@ class Config(object):
 
 
     def _check_limits_var(self, limit_variable):
+        """This is helper function for validating the number of parameters passed as limits from the config."""
         value = getattr(self, limit_variable)
         if value is not None:
             if len(value) != 2:
@@ -90,20 +100,25 @@ class Config(object):
 
 
     def _now_timestamp(self):
+        """Generate an ISO-like timestamp."""
         now = datetime.now()
         s = now.strftime('%Y-%m-%d_%H-%M-%S')
         return s
 
 
     def _create_directory_if_not_exists(self, directory, default_name, timestamp_string, save_in_project_dir=True):
-        session_log = logging.getLogger('session')
+        """Create a requested directory if it didn't exist prior. Raise an error if the directory exists since
+        we want to avoid race conditions and cases where previous results may be overwritten."""
+        session_log = logging.getLogger(self.session_name)
         if directory is not None:
-            path = Path(directory)
+            path = Path(directory).expanduser().absolute()
             if not path.exists():
                 message1 = 'Warning: {} path "{}" not found. This path will be created.'.format(default_name, path)
                 message2 = 'User-specified {} directory created: "{}".'.format(default_name, path)
                 
-                path.mkdir(parents=True, exist_ok=False)
+                # `exist_ok = False` here mainly for preservation and minimizing issues
+                # with race conditions
+                path.mkdir(parents=True, exist_ok=False)  # generate an error if the directory already exists
 
                 print(message1)
                 print(message2)
@@ -133,12 +148,15 @@ class Config(object):
 
 
     def _validate_random_seed(self):
+        """Generate a random seed if one is not provided."""
         if self.random_seed == None:
             seed = int(datetime.now().timestamp())
             self.random_seed = seed
 
 
     def _validate_limits(self):
+        """The classification algorithm has a very specific limits requirement. Determine whether the parameters
+        passed meet that criterion."""
         if self.low_conc_cutoff < self.low_conc:
             raise RuntimeError('The lower concentration cutoff cannot be less than the low concentration limit.')
 
@@ -155,11 +173,13 @@ class Config(object):
 
     
     def _validate_nice_level(self):
+        """Determine whether the nice level is valid."""
         if self.nice_level > 20 or self.nice_level < -20:
             raise RuntimeError('The nice level can only be between -20 (highest) and 19 (lowest).')
 
 
     def _validate_plot_type(self):
+        """Check the plot type."""
         if self.plot_type is None:
             self.plot_type = 'png'
         else:
@@ -170,16 +190,35 @@ class Config(object):
 
 
     def _validate_directories(self):
-        # Check for work path existence. Create if not found.
+        """Check for the existence of the `work` and `logs` directories. Create if not found."""
+        if self.project_dir is None:
+            raise RuntimeError('No `project_directory` has been supplied in the settings. Exiting.')
+        else:
+            self._validate_project_directory()
+
+        # Check for work and log paths existence. Create if not found.
         now_str = self._now_timestamp()
+        
+        # This is an implicit else for both `if` conditions.
         self.work_dir = str(self._create_directory_if_not_exists(self.work_dir, 'work', now_str))
         self.logs_dir = str(self._create_directory_if_not_exists(self.logs_dir, 'logs', now_str))
 
-        if self.project_dir is None:
-            raise RuntimeError('No `project_directory` has been supplied in the settings. Exiting.')
-
     
+    def _validate_session_name(self):
+        """Check the session name is non-empty and a string."""
+        if self.session_name is None:
+            raise RuntimeError('Session name cannot be `None`. Exiting.')
+
+        if type(self.session_name) is not str:
+            raise RuntimeError('The session name must be a string. Exiting.')
+
+        if type(self.session_name) is str and len(self.session_name.strip()) == 0:
+            raise RuntimeError('The session name cannot be empty, or contain only whitespace. Exiting.')
+
+
     def _validate_num_processes(self):
+        """Validate the number of requested processes, and correct the number if too large to avoid
+        performance degradation."""
         available_processes = mp.cpu_count()
 
         if self.num_processes is None:
@@ -189,10 +228,12 @@ class Config(object):
             raise RuntimeError('Only integer processes can be used.')
 
         if self.num_processes > available_processes:
+            self.num_processes = available_processes
             raise RuntimeWarning('Warning: requesting more processes than available virtual CPUs. Performance may be degraded.')
 
 
     def _validate_filename_format(self):
+        """Check the filename format and whether it contains the required `{well_name}` format string."""
         if type(self.filename_format) is not str:
             raise RuntimeError('The `filename_format` must be a string. Exiting.')
         else:
@@ -200,49 +241,38 @@ class Config(object):
                 raise RuntimeError('The `filename_format` must contain the template variable: "{well_name}".')
 
 
-    def validate(self):
-        # Check the conc and fret limits.
-        self._validate_limits()
+    def _validate_project_directory(self):
+        """Determine whether the project directory is valid."""
+        path = Path(self.project_dir).expanduser().absolute()
+        if not path.exists():
+            raise RuntimeError('The `project_directory` does not exist. Exiting.')
 
-        # Check / set the random variable (if Null).
-        self._validate_random_seed()
+        if not path.is_dir():
+            raise RuntimeError('The path supplied for `project_directory` is not a directory. Exiting.')
+        self.project_dir = str(path)
+
+
+    def _validate_wells_filename(self):
+        """Check whether or not the `wells_filename` is valid, and exists."""
+        if self.wells_filename is None:
+            raise RuntimeError('The `wells_filename` has not been set. Exiting.')
         
-        # Check and validate the values / limits of the important variables.
-        self._check_if_zero('min_measurements')
-        self._check_if_zero('num_conc_bins')
-        self._check_if_zero('num_fret_bins')
-        self._check_if_zero('number_of_bins_xy')
+        updated_path = Path(self.project_dir).joinpath(self.wells_filename).absolute()  # `project_dir` is already expanded here.
+        if not updated_path.exists():
+            raise RuntimeError('The `wells_filename` ("{}") does not exist under the project path: "{}". Exiting.'.format(
+                self.wells_filename, 
+                self.project_dir
+            ))
 
-        self._check_if_zero('high_conc')
-        self._check_if_zero('conc_bin_width')
-        self._check_if_zero('fret_bin_width')
+        if not updated_path.is_file():
+            raise RuntimeError('The `wells_filename` ("{}") is not a file. Exiting.'.format(str(updated_path)))
 
-        self._check_if_null('conc_bins')
-        self._check_if_null('fret_bins')
-        self._check_if_null('fg_conc_edges')
-        self._check_if_null('fg_fret_edges')
-        self._check_if_null('wells_filename')
-
-        self._check_limits_var('fine_grid_xlim')
-        self._check_limits_var('fine_grid_ylim')
-
-        # Check that the nice level is within the allowed limits (-20 to 19)
-        self._validate_nice_level()
-
-        # Check that the number of requested processes is valid. Set a valid number accordingly.
-        self._validate_num_processes()
-
-        # Check that the filename_format is not Null.
-        self._validate_filename_format()
-
-        # Check for data, work, and plot directories existence. Create work and plot directories if not found.
-        self._validate_directories()
-        
-        # Check for valid plot types.
-        self._validate_plot_type()
+        self.wells_filename = str(updated_path)
 
     
     def _populate_bins_variables(self):
+        """Using the set parameter values within the config object, define the `numpy` array which
+        contains the limits for use in the classification algorithm."""
         self.num_conc_bins = int((self.high_conc - self.low_conc)/self.conc_bin_width) + 1
         self.num_fret_bins = int((self.high_fret - self.low_fret)/self.fret_bin_width) + 1
 
@@ -252,10 +282,15 @@ class Config(object):
         self.fg_fret_edges = np.linspace(self.low_fret, self.high_fret, self.number_of_bins_xy + 1)
 
 
-    def load_config_from_file(self, settings_filename):
-        c = load_settings(settings_filename)
+    def _validate_config(self, yaml_config):
+        """Set the values for the internal parameters of the config object
+        based on those parsed / extracted from an input YAML object (usually
+        a dictionary). Finally, validate those values and auto-populate the 
+        relevant variables where necessary."""
+        c = yaml_config.copy()
 
         # Job control parameters
+        self.session_name       = c['session_name']
         self.random_seed        = c['random_seed']
         self.num_processes      = c['num_processes']
         self.nice_level         = c['nice_level']
@@ -293,8 +328,86 @@ class Config(object):
         self.validate()
 
 
+    def load_config_from_settings(self, yaml_config):
+        """This is another convenience function which allows the population and validation of 
+        the config object directly from a parsed YAML config (often a dictionary)."""
+        self._validate_config(yaml_config)
+
+
+    def load_config_from_file(self, settings_filename):
+        """This is a convenience function to allow the population and validation of the config 
+        object using the path to an input YAML file."""
+        yaml_config = load_settings(settings_filename)
+        self._validate_config(yaml_config)
+
+
+    def validate(self):
+        """Check all the parameters, and set them to appropriate defaults where necessary."""
+        # Validate the session name
+        self._validate_session_name()
+
+        # Check for project, work, and log directories. Create work and log if not found.
+        self._validate_directories()
+
+        # Check the conc and fret limits.
+        self._validate_limits()
+
+        # Check / set the random variable (if Null).
+        self._validate_random_seed()
+        
+        # Check and validate the values / limits of the important variables.
+        self._check_if_zero('min_measurements')
+        self._check_if_zero('num_conc_bins')
+        self._check_if_zero('num_fret_bins')
+        self._check_if_zero('number_of_bins_xy')
+
+        self._check_if_zero('high_conc')
+        self._check_if_zero('conc_bin_width')
+        self._check_if_zero('fret_bin_width')
+
+        self._check_if_null('conc_bins')
+        self._check_if_null('fret_bins')
+        self._check_if_null('fg_conc_edges')
+        self._check_if_null('fg_fret_edges')
+        self._check_if_null('wells_filename')
+
+        self._check_limits_var('fine_grid_xlim')
+        self._check_limits_var('fine_grid_ylim')
+
+        # Check that the nice level is within the allowed limits (-20 to 19)
+        self._validate_nice_level()
+
+        # Check that the number of requested processes is valid. Set a valid number accordingly.
+        self._validate_num_processes()
+
+        # Check that the filename_format is not Null.
+        self._validate_filename_format()
+
+        # Apply a path fix for the `wells_filename` if a relative path is used.
+        self._validate_wells_filename()
+        
+        # Check for valid plot types.
+        self._validate_plot_type()
+
+        
     def __repr__(self):
-        params = 'settings_filename,random_seed,num_processes,nice_level'.split(',')
+        """Generate a string representation of the object and its parameter values for debugging
+        purposes. For e.g. if our `settings_filename` is `config.yaml` we can do:
+
+            >>> from damfret_classifier.config import Config
+            >>> config = Config('config.yaml')
+            >>> config_str = str(repr(config))
+            >>> other_config = Config('config.yaml')
+            >>> other_config_str = str(repr(other_config))
+            >>> config == other_config  # False since different memory locations
+            >>> config_str == other_config_str  # True
+
+        Amongst other things.
+        """
+
+        # Build the list of parameters contained with the object. These will be used to select
+        # their values while building the string representation of the object.
+        params = 'settings_filename,session_name,random_seed,num_processes,nice_level'.split(',')
         params += 'low_conc,high_conc,low_fret,high_fret'.split(',')
         params += 'low_conc_cutoff,high_conc_cutoff,conc_bin_width,fret_bin_width'.split(',')
         params += 'number_of_bins_xy,min_measurements'.split(',')
@@ -302,6 +415,11 @@ class Config(object):
         params += 'plot_gaussian,plot_logistic,plot_fine_grids,plot_rsquared'.split(',')
         params += 'plot_skipped,fine_grid_xlim,fine_grid_ylim,plot_type'.split(',')
 
+        # Now we obtain the values, and populate them as key / value pairs which will
+        # be appended and inserted into the string representation.
+        #
+        # The benefit of this approach is that we can also create objects directly
+        # from the string.
         params_and_values = list()
         for param in params:
             value = getattr(self, param)
@@ -316,4 +434,5 @@ class Config(object):
 
 
     def __str__(self):
+        """Output a string representation of the object. Useful for printing."""
         return str(repr(self))
