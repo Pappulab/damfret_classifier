@@ -39,20 +39,20 @@ def calculate_rsquared(func, xdata, ydata, p0=None, bounds=None, maxfev=10000):
     @param xdata:  The x data of the function which will be fitted.
     @param ydata:  The y data of the function which will be fitted.
     @param p0:     A tuple or list containing the initial values which will be used when
-                   evaluating the function.  
+                   evaluating the function.
     @param bounds: A tuple or list containing the upper and lower bounds of the parameters
                    passed to the fitted function, `func`. For e.g. if the input function
                    requires 2 parameters, the list or tuple passed to `bounds` will contain
                    2 items, each a list or tuple of size 2.
     @param maxfev: An integer referring to the number of times the function should be
-                   evaluated. 
+                   evaluated.
 
     @return tuple: A 2-tuple comprised of the `popt` and `rsquared` from a fit of the
                    function data based on the passed parameters.
     """
     if p0 is not None and bounds is None:
         popt, _pcov = curve_fit(func, xdata, ydata, p0=p0, maxfev=maxfev)
-    
+
     elif p0 is not None and bounds is not None:
         popt, _pcov = curve_fit(func, xdata, ydata, p0=p0, bounds=bounds, maxfev=maxfev)
 
@@ -82,7 +82,7 @@ def slice_data(data, conc_bins, fret_bins):
 
     @param fret_bins (np.array):    a 1D numpy array containing the edges along the
                                     FRET axis.
-    
+
     @return tuple:                  a 2-tuple containing the averages of the FRET
                                     within each concentration slice (i.e. between
                                     two concentration edges); and, an OrderedDict
@@ -92,7 +92,7 @@ def slice_data(data, conc_bins, fret_bins):
                                     and a sum-normalized 1D histogram of the FRET
                                     data corresponding to the FRET bins.
 
-    Note: the edges are wider than the edges used for the generation of fine-grid 
+    Note: the edges are wider than the edges used for the generation of fine-grid
     histogram plots.
     """
     # now, go through the concentration slices
@@ -102,7 +102,7 @@ def slice_data(data, conc_bins, fret_bins):
         df = data.copy()
         df = df[df['concentration'] > low]
         df = df[df['concentration'] <= high]
-        
+
         # histogram the fret data in the concencration slice
         if not df.empty:
             fret_hist, _edges = np.histogram(df['damfret'], bins=fret_bins)
@@ -130,9 +130,9 @@ def calculate_nucleated_fractions(config, well_name, slices_histograms, average)
                                             to the config parameters.
 
     @param slices_histograms (OrderedDict): an OrderedDict containing the concentration slices as keys
-                                            and another 2-tuple as values. That 2-tuple contains the 
-                                            selected data between those limits, and a sum-normalized 
-                                            1D histogram of the FRET data corresponding to the FRET 
+                                            and another 2-tuple as values. That 2-tuple contains the
+                                            selected data between those limits, and a sum-normalized
+                                            1D histogram of the FRET data corresponding to the FRET
                                             bins.
 
     @param average (float):                 The max average of the FRET within the last 4 slices across
@@ -140,14 +140,14 @@ def calculate_nucleated_fractions(config, well_name, slices_histograms, average)
                                             edge of the data at higher concentration tends to taper
                                             off or also increase in FRET.
 
-    @return tuple:                          A 3-tuple corresponding to the `nucleated_fractions`, 
+    @return tuple:                          A 3-tuple corresponding to the `nucleated_fractions`,
                                             `conc_bin_centers`, and `r_squared` values determined
                                             from the Gauss2 fits.
 
     The double-Gaussian is configured such that the center of the 2nd Gaussian is always fixed. Hence,
     as the slices are iterated across and the function is fit to the 1D histogram of the FRET data
     within that concentration slice, it can be used as a proxy for nucleation. Nucleation is determined
-    by comparing the area of the 2nd Gaussian to the total area of both Gaussians. See the function: 
+    by comparing the area of the 2nd Gaussian to the total area of both Gaussians. See the function:
     `classify_datasets` for more.
     """
     # fit two gaussians to the histogram of FRET values within the bin.
@@ -162,10 +162,10 @@ def calculate_nucleated_fractions(config, well_name, slices_histograms, average)
     for conc_slice in slices_histograms:
         _df, norm_fret_hist = slices_histograms[conc_slice]
         x = config.fret_bins[:-1] + config.fret_bin_width/2.0
-        
+
         popt, rs = calculate_rsquared(gauss2, x, norm_fret_hist, bounds=fit_bounds)
         a1, c1, a2, c2 = popt
-        
+
         g1 = lambda x, a, c: a*np.exp(-((x)/c)**2.0)
         g2 = lambda x, a, c: a*np.exp(-((x-average)/c)**2.0)
         y1 = g1(x, a1, c1)
@@ -198,8 +198,8 @@ def calculate_nucleated_fractions(config, well_name, slices_histograms, average)
 
 def determine_class(df_points, fraction_above_csat, diff, fit_value, region_r_squared, r):
     """This function determines what phase separated class a given dataset has based on
-    the parameters calculated which quantify nucleation. Note, the parameter choices 
-    used to characterize a given class is purely phenomenological. 
+    the parameters calculated which quantify nucleation. Note, the parameter choices
+    used to characterize a given class is purely phenomenological.
 
     @param df_points (int):             The number of points found at a FRET above 0.05.
 
@@ -240,13 +240,13 @@ def determine_class(df_points, fraction_above_csat, diff, fit_value, region_r_sq
     if df_points <= 20:
         score   = 1.0  # originally: score = (0.15-diff)/0.15
         color   = 'blue'
-    
+
     elif fraction_above_csat < 0.1:
         score1  = min([1,(diff-0.15)/(0.5-0.15)])
         score2  = (0.1-fraction_above_csat)/0.1
         score   = min([score1, score2])
         color   = 'yellow'
-    
+
     elif fit_value > 0.08 and np.min(region_r_squared) < 0.6:
         score1  = min([1, (0.6 - np.min(region_r_squared))/(0.6 - 0.3)])
         score2  = min([1,(diff-0.15)/(0.5-0.15)])
@@ -335,8 +335,8 @@ def _log_skipped_analysis(logger, well_file, low_conc, high_conc, min_conc, max_
     logger.info(message3)
     logger.info(message4)
     logger.info(message5)
-    
-    
+
+
 
 def _configure_logger(logs_dir, session_name, raw_well_name, attach_stream_handler):
     """This is somewhat important as it sets up the logger for use during multithreading. The end
@@ -442,14 +442,14 @@ def _write_session_log_header(config):
         elif setting_name == 'logs_directory' and value is None:
             value = getattr(config, 'logs_dir')
             auto = ' (auto-populated)'
-        
+
         v = value
         if type(value) is str:
             v = '"{}"'.format(value)
-        
+
         session_log.info('{setting}: {value} {gen_method}'.format(setting=setting_name, value=v, gen_method=auto))
     session_log.info('')
-    _insert_section_separator(session_log)    
+    _insert_section_separator(session_log)
     session_log.info('')
 
 
@@ -457,7 +457,7 @@ def _initialize_session_log(config):
     """Initial the log and dump the header ahead of analysis."""
     session_log = logging.getLogger(config.session_name)
     _write_session_log_header(config)
-    
+
     session_log.info('BEGIN ANALYSIS')
     session_log.info('')
     return session_log
@@ -493,7 +493,7 @@ def _save_parameters_and_skipped_wells(config, session_log, wells_table, results
     parameters = OrderedDict()
     for field in fields:
         parameters[field] = list()
-    
+
     skipped = list()
     for fargs in results:
         raw_well_file = fargs[1]
@@ -509,7 +509,7 @@ def _save_parameters_and_skipped_wells(config, session_log, wells_table, results
     for skipped_well in skipped:
         df = wells_table[wells_table['well_file'] == skipped_well].dropna()
         skipped_dfs.append(df)
-    
+
     if len(skipped_dfs) > 0:
         _save_skipped_wells(config, session_log, skipped_dfs)
     _save_parameters(config, session_log, parameters)
@@ -522,7 +522,7 @@ def _save_skipped_wells(config, session_log, skipped_dfs):
     skipped_df.reset_index(drop=True, inplace=True)
     skipped_savepath_tsv = os.path.join(config.work_dir, 'skipped.tsv')
     skipped_savepath_csv = os.path.join(config.work_dir, 'skipped.csv')
-    
+
     to_fwf(skipped_df, skipped_savepath_tsv)
     skipped_df.to_csv(skipped_savepath_csv, index=False)
     session_log.info('Skipped well files exported as: "{}"'.format(skipped_savepath_tsv))
@@ -570,7 +570,7 @@ def _move_plots_to_project_root(config, session_log):
     session_log.info('MOVE PLOTS')
     session_log.info('')
     session_log.info('Moving files from `work_directory` ("{}") to `project_directory` ({})'.format(
-        config.work_dir, 
+        config.work_dir,
         config.project_dir
     ))
     plot_files = [f for f in os.listdir(config.work_dir) if f.endswith(config.plot_type)]
@@ -617,12 +617,12 @@ def classify_dataset(config, raw_well_name):
     # is executed. This becomes important when multiprocessing is applied.
     os.nice(config.nice_level)
 
-    # We use the `raw_well_name` - e.g. A01 which has the leading zero. 
+    # We use the `raw_well_name` - e.g. A01 which has the leading zero.
     # The purpose of this is that when the log is saved, it can easily
     # be sorted and collated into the final session log.
     logger = _configure_logger(config.logs_dir, config.session_name, raw_well_name, attach_stream_handler=True)
     session = logging.getLogger(config.session_name)
-    
+
     # Determine the actual well name
     well_name = _determine_well_name(raw_well_name)
     well_file = os.path.join(config.project_dir, config.filename_format.format(well_name=well_name))
@@ -636,6 +636,7 @@ def classify_dataset(config, raw_well_name):
     if not os.path.exists(well_file):
         _log_skipped_file_not_found(session, well_file)
         _log_skipped_file_not_found(logger, well_file)
+        params.well_file = well_name
         return params
 
     # Next, check to determine if this file has enough cell measurements for analysis (as limited by the
@@ -645,6 +646,7 @@ def classify_dataset(config, raw_well_name):
         _plot_skipped_well_file(config, raw_data, well_name)
         _log_skipped_cell_measurements(session, well_file, config.min_measurements, raw_counts)
         _log_skipped_cell_measurements(logger, well_file, config.min_measurements, raw_counts)
+        params.well_file = well_name
         return params
 
     # Next, check if the file is within the data limits:
@@ -653,13 +655,14 @@ def classify_dataset(config, raw_well_name):
         _plot_skipped_well_file(config, raw_data, well_name)
         _log_skipped_analysis(session, well_file, config.low_conc, config.high_conc, min_conc, max_conc)
         _log_skipped_analysis(logger, well_file, config.low_conc, config.high_conc, min_conc, max_conc)
+        params.well_file = well_name
         return params
 
     # At this point, we can continue
-    data, counts        = apply_cutoff_to_dataframe(raw_data, config.low_conc_cutoff, config.high_conc_cutoff)    
+    data, counts        = apply_cutoff_to_dataframe(raw_data, config.low_conc_cutoff, config.high_conc_cutoff)
     params.counts       = counts
     params.well_file    = well_name
-    
+
     # remove extreme concentration values
     data = clamp_data(data, config.low_conc_cutoff, config.high_conc_cutoff)
     params.mean_fret = data['damfret'].mean()
@@ -686,21 +689,21 @@ def classify_dataset(config, raw_well_name):
     average = max(conc_fret_averages[-4:])  # previously from [-4:]
     _log_conc_FRET_averages(logger, average, conc_fret_averages)
 
-    # Determine how the system nucleates across concentration by calculating the area under the 
+    # Determine how the system nucleates across concentration by calculating the area under the
     # Gaussian whose center is set to the max average. Then, that area is compared to the total
     # area under both Gaussians. Systems with specific nucleation profiles have unique
     # nucleation patterns.
     params.gauss2_loc = average
     nucleated_fractions, conc_bin_centers, r_squared = calculate_nucleated_fractions(config, well_name, slices_histograms, average)
 
-    # We also save the quality of fit of the double Gaussians. 
+    # We also save the quality of fit of the double Gaussians.
     # Since the location of the second Gaussian (i.e. the max of the concentration averages) is
     # fixed, the quality of fit across the concentration slices is an additional proxy for
     # a continuous transition.
     conc_bin_centers    = np.array(conc_bin_centers)
     r_squared           = np.array(r_squared)
     params.max_gauss_r2 = np.max(r_squared)
-    
+
     # fit a linear function to the R^2 values of the Gauss2 fits across the different slices.
     linear_func         = lambda x, a, b: a*x + b
     popt, pconv         = curve_fit(linear_func, conc_bin_centers, r_squared, bounds=[[-np.inf, -np.inf], [0, np.inf]])
@@ -725,9 +728,9 @@ def classify_dataset(config, raw_well_name):
         mean_fret       = data['damfret'].mean()
         score           = (0.15-diff)/0.15
         params.score    = score
-        
+
         if mean_fret < 0.05:
-            params.color = 'blue'    
+            params.color = 'blue'
         else:
             params.color = 'black'
         _log_class_and_score(session, well_file, params.color, params.score)
@@ -753,7 +756,7 @@ def classify_dataset(config, raw_well_name):
     # This is the final check for black.
     if saturation_conc <= config.low_conc_cutoff:
         score = (0.15-diff)/0.15
-        
+
         params.csat         = saturation_conc
         params.csat_slope   = slope
         params.color        = 'black'
@@ -762,7 +765,7 @@ def classify_dataset(config, raw_well_name):
         _log_class_and_score(session, well_file, params.color, params.score)
         _log_class_and_score(logger, well_file, params.color, params.score)
         return params
-    
+
     # Record the saturation concentration.
     logger.info('Saturation concentration: {}'.format(saturation_conc))
     if saturation_conc < max(conc_bin_centers):
@@ -776,13 +779,13 @@ def classify_dataset(config, raw_well_name):
     region_lower = np.where(conc_bin_centers >= saturation_conc)
     region_upper = np.where(conc_bin_centers <= saturation_conc)
     _log_region_values(logger, region_indices, region_lower, region_upper, conc_bin_centers)
-    
+
     # Determine if there is a large change in the fit goodness in this region. And, determine the max change in
     # fit goodness around the saturation concentration.
     region_r_squared = r_squared[region_indices]
     logger.info('Region R^2: {}'.format(region_r_squared))
     fit_value = np.max(np.abs(np.diff(region_r_squared)))
-    
+
     params.csat                     = saturation_conc
     params.csat_slope               = slope
     params.linear_r2                = linear_rsquared
@@ -790,7 +793,7 @@ def classify_dataset(config, raw_well_name):
     params.max_r2_region            = np.max(region_r_squared)
     params.min_abs_diff_r2_region   = np.min(np.abs(np.diff(region_r_squared)))
     params.max_abs_diff_r2_region   = np.max(np.abs(np.diff(region_r_squared)))
-    
+
     # check for noisy data that hasn't fully phase separated
     upper_conc_limit = config.high_conc_cutoff - 1
     if saturation_conc <= upper_conc_limit:
@@ -803,7 +806,7 @@ def classify_dataset(config, raw_well_name):
     df_points               = len(df)
     fraction_above_csat     = df_points/total_points
     params.frac_above_csat  = fraction_above_csat
-    
+
     # Finally, determine the phase separation class and its confidence score based on the
     # various parameters calculated.
     color, score = determine_class(df_points, fraction_above_csat, diff, fit_value, region_r_squared, linear_rsquared)
@@ -820,7 +823,7 @@ def classify_datasets(config_filename, move_to_project_root=False):
     """This is the main entry point for the classification of the datasets using
     a provided configuration file. This is so configured such that the user can
     use the entry point for both MANIOC and non-MANIOC project directories.
-    
+
     @param config_filename (str):       The location of the YAML config file which
                                         will be used when analyzing the data.
 
@@ -842,21 +845,21 @@ def classify_datasets(config_filename, move_to_project_root=False):
     """
     start_time  = datetime.now()
     config      = Config(config_filename)
-    
+
     # Setup the logger for use.
     iso_time                = start_time.strftime('%Y-%m-%d_%H-%M-%S')
     session_log_filename    = os.path.join(config.work_dir, 'session---%s.log' % iso_time)
     setup_logger(config.session_name, session_log_filename, attach_stream_handler=True)
     session_log = _initialize_session_log(config)
     wells_table = pd.read_csv(config.wells_filename)
-    
+
     # Calculate the classification and score for each well.
     function_args = list()
     for _index, row in wells_table.iterrows():
         raw_well_name = str(row['well_file'])
         args = (config, raw_well_name, )
         function_args.append(args)
-    
+
     # Save the results / parameters as an `OrderedDict`
     results = parallelize(classify_dataset, function_args, config.num_processes, config.session_name)
 
