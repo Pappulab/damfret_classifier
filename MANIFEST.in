@@ -1,4 +1,5 @@
 include damfret_classifier/synthetic.npy
 include damfret_classifier/TableS1.csv
 include damfret_classifier/TableS2.csv
+include damfret_classifier/default_config.yaml
 prune examples

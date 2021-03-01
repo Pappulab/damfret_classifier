@@ -20,5 +20,6 @@ setup(
         'scipy>=1.5',
         'tabulate>=0.8'
     ],
+    include_package_data=True,
     zip_safe=True
 )
