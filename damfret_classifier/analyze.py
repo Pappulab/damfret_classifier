@@ -19,7 +19,7 @@ from damfret_classifier.utils import load_settings, load_raw_synthetic_data, loa
 from damfret_classifier.utils import read_original_data, remove_genes_and_replicates_below_count
 from damfret_classifier.utils import apply_cutoff_to_dataframe, to_fwf, determine_if_manioc_project
 from damfret_classifier.utils import create_genes_table, clamp_data, check_if_data_within_limits
-from damfret_classifier.utils import initialize_pool, parallelize
+from damfret_classifier.utils import initialize_pool, parallelize, determine_well_name
 
 
 __all__ = ['clamp_data', 'calculate_rsquared', 'slice_data', 'calculate_nucleated_fractions', 'determine_class',
@@ -348,23 +348,6 @@ def _configure_logger(logs_dir, session_name, raw_well_name, attach_stream_handl
     return logger
 
 
-def _determine_well_name(raw_well_name):
-    """Use a regex to extrac the name of the well from that provided from the plasmid table
-    or other equivalent resource. This is the most robust method and more future proof overall."""
-    well_regex = re.compile('([A-Z])+(\\d+)')
-    match = well_regex.search(raw_well_name)
-    if match is None:
-        raise RuntimeError('No well entry found for well: {}'.format(raw_well_name))
-
-    groups = match.groups()
-    base_well_name = groups[0]
-    well_num = groups[1]
-
-    # reformat to match the CSV name format (i.e. not zero-padded) - hence the use of `int`.
-    well_name = '{base_well}{well_num}'.format(base_well=base_well_name, well_num=int(well_num))
-    return well_name
-
-
 def _log_skipped_file_not_found(logger, well_file):
     """Notify the user that the well file was not found, and hence was skipped."""
     message1 = 'Skipped :: well file "{}" not found.'.format(well_file)
@@ -624,7 +607,7 @@ def classify_dataset(config, raw_well_name):
     session = logging.getLogger(config.session_name)
 
     # Determine the actual well name
-    well_name = _determine_well_name(raw_well_name)
+    well_name = determine_well_name(raw_well_name)
     well_file = os.path.join(config.project_dir, config.filename_format.format(well_name=well_name))
 
     # Begin processing.

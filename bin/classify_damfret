@@ -6,6 +6,7 @@ import pkgutil
 import yaml
 import shutil
 import signal
+from pprint import pprint
 from pathlib import Path
 from datetime import datetime
 from argparse import ArgumentParser
@@ -13,6 +14,7 @@ from damfret_classifier.analyze import classify_datasets
 from damfret_classifier.config import Config
 from damfret_classifier.utils import generate_default_config, load_settings, determine_if_manioc_project
 from damfret_classifier.utils import validate_manioc_directory_tree
+from damfret_classifier.utils import generate_wells_filename_from_directory_contents, find_subdirectories_with_files_for_analysis
 
 
 script_description = (
@@ -56,40 +58,37 @@ def main():
 
     # Otherwise, we have two choices: analyze a MANIOC analysis or non-MANIOC dataset.
     settings = load_settings(args.config)
-    is_manioc, _dirs = determine_if_manioc_project(settings['project_directory'])
+    directories_contents = find_subdirectories_with_files_for_analysis(settings['filename_format'], settings['project_directory'])
 
-    if is_manioc:
-        manioc_analysis_paths   = list()
-        project_directory       = settings['project_directory']
-        wells_filename          = settings['wells_filename']
-        random_seed             = get_or_generate_random_seed(settings)
-        manioc_analysis_paths   = validate_manioc_directory_tree(project_directory)
-        project_directory_path  = Path(project_directory).expanduser().absolute()
-        wells_table_filename    = project_directory_path.joinpath(wells_filename).expanduser().absolute()
-        
-        for index, manioc_project_path in enumerate(manioc_analysis_paths, start=1):
-            # Update the project directory to the specific plate. This allows us the ability to analyze
-            # each plate in succession using the base config filename that was input (i.e. `args.config`).
-            new_settings = settings.copy()
-            new_settings['session_name']        = '{}_{}'.format(settings['session_name'], index)
-            new_settings['project_directory']   = str(manioc_project_path)
-            new_settings['random_seed']         = random_seed
-            project_settings_filename           = manioc_project_path.joinpath('damfret_classifier_settings.yaml')
-            project_wells_table_filename        = manioc_project_path.joinpath(wells_filename).expanduser().absolute()
+    random_seed = get_or_generate_random_seed(settings)
+    for index, directory in enumerate(directories_contents, start=1):
+        new_settings = settings.copy()
+        new_settings['session_name'] = '{}_{}'.format(settings['session_name'], index)
+        new_settings['project_directory'] = directory
+        new_settings['random_seed'] = random_seed
 
-            # Output the new config, and copy over the plasmid table. Doing this simplifies the development
-            # as a new parameter / argument would have to be supported.
-            with open(project_settings_filename, 'w') as sfile:
-                yaml.dump(new_settings, sfile)
-            shutil.copyfile(wells_table_filename, project_wells_table_filename)
+        new_wells_path = None
+        if settings['wells_filename'] is None:
+            contents = directories_contents[directory]
+            new_wells_path = Path(directory).joinpath('wells.csv').absolute()
+            generate_wells_filename_from_directory_contents(contents, new_wells_path)
+            new_settings['wells_filename'] = str(new_wells_path)
+        else:
+            wells_path = Path(settings['wells_filename']).absolute()
+            new_wells_path = Path(directory).joinpath(settings['wells_filename']).absolute()
+            shutil.copyfile(wells_path, new_wells_path)
 
-            # Ready to begin analysis. This design is preferred as it allows a single
-            # entry point for different project layouts.
-            print('Analyzing MANIOC Output ({} / {})'.format(index, len(manioc_analysis_paths)))
-            classify_datasets(project_settings_filename, move_to_project_root=True)
-    else:
-        # This is a non-MANIOC analysis run.
-        classify_datasets(args.config)
+        # Output the new config, and copy over the plasmid table. Doing this simplifies the development
+        # as a new parameter / argument would have to be supported.
+        project_settings_filename = Path(directory).joinpath('damfret_classifier_settings.yaml')
+        with open(project_settings_filename, 'w') as sfile:
+            pprint(new_settings)
+            yaml.dump(new_settings, sfile)
+
+        # Ready to begin analysis. This design is preferred as it allows a single
+        # entry point for different project layouts.
+        print('Analyzing MANIOC Output ({} / {})'.format(index, len(directories_contents)))
+        classify_datasets(project_settings_filename, move_to_project_root=True)
 
 
 if __name__ == '__main__':

@@ -1,5 +1,5 @@
 # The name of this session. This variable is only used for the uniquely
-# identifying the log files when multiple datasets are analyzed at once, 
+# identifying the log files when multiple datasets are analyzed at once,
 # as in a MANIOC directory layout. In such a layout, each subsequent
 # plate is appended with a numerical non-zero index which will specifically
 # identify the session internally.
@@ -28,7 +28,7 @@ num_processes: 1
 # This effectively sets the priority of the child process to the lowest.
 # Useful if the number of processes approaches or exceeds the number of
 # processes available to the system as using all the processes by default
-# at their default nice level can overwhelm the system and degrade 
+# at their default nice level can overwhelm the system and degrade
 # performance overall. In some cases this can slow down the overall
 # analysis.
 #
@@ -42,21 +42,23 @@ nice_level: 19
 # The location of the DAmFRET project that contains the gated FCS data.
 # Will be checked at runtime. Requires a non-null argument.
 #
-# If this is a MANIOC project directory (see `damfret_classifer.utils`), 
-# only the path to the parent directory containing `manioc.results` is
-# required as the program will automatically search the directory tree.
+# If individual datasets are stored as sub-directories under the path provided,
+# the program will search and identify directories that contain files
+# with the same format as `filename_format` (Barring default directories
+# such as `work---<YYYY-mm-DD_HH-MM-SS>`, `logs---<YYYY-mm-DD_HH-MM-SS>`,
+# and `raw_data`.
 #
 # This path can also be relative. For e.g. `'.'`.
 project_directory: .
 
 
 # A CSV file containing the well files which will be examined. If a relative
-# path is provided, the path will be relative to the `project_directory`. 
-# For e.g. if our `project_directory` is `/tmp/20cy148.damfret` and the 
-# `wells_filename` is "wells.csv", this means that the actual path of 
+# path is provided, the path will be relative to the `project_directory`.
+# For e.g. if our `project_directory` is `/tmp/20cy148.damfret` and the
+# `wells_filename` is "wells.csv", this means that the actual path of
 # filename on the filesystem is actually: `/tmp/20cy148.damfret/wells.csv`.
 #
-# If an absolute path is provided (external or internal to the 
+# If an absolute path is provided (external or internal to the
 # `project_directory`) that path will be used.
 #
 # The purpose of this design is such that the user can directly refer to a
@@ -64,12 +66,25 @@ project_directory: .
 # The purpose of this is such that if some wells are skipped due to the
 # the concentration range exceeding the values provided in `low_conc`
 # and `high_conc`, a subsequent analysis can be performed by referring to
-# a different CSV file containing the previously "skipped" wells. This
-# parameter cannot be `Null` at runtime.
+# a different CSV file containing the previously "skipped" wells.
+#
+# If this parameter is not `Null`, the same list will be used when analyzing
+# all the data. The program will use this reference list for all the sub
+# directories in the `project_directory`. If each sub-directory contains
+# a different number of wells, the resulting summary could be misleading.
+#
+# If this parameter is set to `Null`, the program examines each
+# individual subdirectory that contains data (i.e. those with files
+# containing files with names of the format `filename_format`) and builds
+# its own table of the wells files that will be analyzed. This file,
+# `wells.csv` will be saved in that directory root, and its value
+# updated in the YAML sub-directory settings.
+#
+# The optimal solution is to keep this option set to `Null`.
 wells_filename: Null
 
 
-# The format of the gated FCS filenames in the `project_directory`. 
+# The format of the gated FCS filenames in the `project_directory`.
 # This name can be anything, but must contain `{well_name}` in its filename.
 # For e.g. `'{well_name}.csv'`. Cannot be null.
 filename_format: '{well_name}.fcs.csv'
@@ -77,30 +92,30 @@ filename_format: '{well_name}.fcs.csv'
 
 # The location where the parameters and session log will be saved.
 #
-# If `Null`, a default directory called `work---<YYYY-mm-DD_HH-MM-SS>` will 
+# If `Null`, a default directory called `work---<YYYY-mm-DD_HH-MM-SS>` will
 # be created. `Null` is the default and preferred option as it isolates
 # each run.
 work_directory: Null
 
 
-# The location where the intermediate log files will be created. 
+# The location where the intermediate log files will be created.
 #
-# If `Null`, a default directory called `logs---<YYYY-mm-DD_HH-MM-SS>` will 
-# be created. `Null` is the default and preferred option as it isolates 
+# If `Null`, a default directory called `logs---<YYYY-mm-DD_HH-MM-SS>` will
+# be created. `Null` is the default and preferred option as it isolates
 # each run.
 logs_directory: Null
 
 
-# Skip the analysis of files (usually gated well files) containing less 
+# Skip the analysis of files (usually gated well files) containing less
 # than this number of measurements. These files will be marked as N/A
-# in the final collated parameter file. 
+# in the final collated parameter file.
 #
-# This number is determined by analyzing the Shannon entropy of the 
+# This number is determined by analyzing the Shannon entropy of the
 # dataset. See the SI of the DAmFRET manuscript for more.
 minimum_required_measurements: 20000
 
 
-# These are the limits of the data for the cutoff. This data is excluded 
+# These are the limits of the data for the cutoff. This data is excluded
 # as data the extrema are noisy.
 #
 # Data lower than this value will be excluded.
@@ -129,12 +144,12 @@ low_fret: -1.0
 high_fret: 1.0
 
 
-# Set this value such This effectively creates ~25 bins within the 
+# Set this value such This effectively creates ~25 bins within the
 # current concentration range (i.e. `high_conc - low_conc`).
 conc_bin_width: 0.2
 
 
-# Set this value such that it effectively creates ~100 bins within the 
+# Set this value such that it effectively creates ~100 bins within the
 # current FRET range (i.e. `high_fret - low_fret`). Higher resolution
 # is required here since this bin width will be used to create a 1D
 # histogram which profiles the FRET data within a concentration "slice".
@@ -149,7 +164,7 @@ fret_bin_width: 0.02
 number_of_bins: 300
 
 
-# Which plots to generate. 
+# Which plots to generate.
 #
 # 1) 2D histograms plots are the profiles of the raw data.
 #
@@ -164,11 +179,11 @@ number_of_bins: 300
 #    for debugging.
 #
 # 4) R^2 fits plots are the plots of the fits to the R^2 values
-#    extracted from the fit of Gaussian plots, which is used to 
+#    extracted from the fit of Gaussian plots, which is used to
 #    characterize assembly. Useful for diagnostic purposes.
 #
 # 5) For data that is not within the effective limits and are
-#    skipped for subsequent analysis, it could be useful to examine 
+#    skipped for subsequent analysis, it could be useful to examine
 #    the profiles thereof and use that to determine what the effective
 #    range should be. Note that the limits are auto-calculated
 #    and not referenced from those provided in `xlim_2d_histogram`

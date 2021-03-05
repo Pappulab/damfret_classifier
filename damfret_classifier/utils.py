@@ -17,8 +17,9 @@ from scipy.optimize import curve_fit
 __all__ = ['load_raw_synthetic_data', 'load_manuscript_classifications', 'create_directory_if_not_exist', 'shannon_entropy',
            'load_settings', 'read_original_data', 'remove_genes_and_replicates_below_count', 'validate_gene_replicates',
            'create_genes_table', 'start_process', 'initialize_pool', 'parallelize', 'generate_default_config', 'to_fwf',
-           'clamp_data', 'find_subdirectories', 'read_manioc_config', 'validate_manioc_directory_tree', 
-           'check_if_data_within_limits', 'parse_manioc_timestamp', 'determine_if_manioc_project']
+           'clamp_data', 'find_subdirectories', 'read_manioc_config', 'validate_manioc_directory_tree',
+           'check_if_data_within_limits', 'parse_manioc_timestamp', 'determine_if_manioc_project', 'determine_well_name',
+           'generate_wells_filename_from_directory_contents', 'find_subdirectories_with_files_for_analysis']
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -41,11 +42,11 @@ pd.DataFrame.to_fwf = to_fwf
 def load_raw_synthetic_data():
     """This function loads the raw synthetic data referenced in the DAmFRET manuscript.
 
-    @return synthetic_data: an `OrderedDict` containing the raw synthetic data. 
+    @return synthetic_data: an `OrderedDict` containing the raw synthetic data.
                             Keys are short names. Values are 2-tuples. The first
-                            index contains a `Pandas.DataFrame` with 2 columns 
-                            ("concentration", "FRET"). Some of the rows are 
-                            populated with NaNs. The second index contains the 
+                            index contains a `Pandas.DataFrame` with 2 columns
+                            ("concentration", "FRET"). Some of the rows are
+                            populated with NaNs. The second index contains the
                             corresponding long filename.
 
     Useful reference: https://programtalk.com/vs2/python/12103/python-skyfield/skyfield/functions.py/
@@ -107,6 +108,84 @@ def find_subdirectories(pathname):
     return subdirectories
 
 
+def determine_well_name(raw_well_name, zero_pad=False):
+    """Use a regex to extract the name of the well from that provided from the plasmid table
+    or other equivalent resource. This is the most robust method and more future proof overall."""
+    well_regex = re.compile('([A-Z]+)(\\d+)')
+    match = well_regex.search(raw_well_name)
+    if match is None:
+        raise RuntimeError('No well entry found for well: {}'.format(raw_well_name))
+
+    groups = match.groups()
+    base_well_name = groups[0]
+    well_num = groups[1]
+
+    # reformat to match the CSV name format (i.e. not zero-padded) - hence the use of `int`.
+    well_name = '{base_well}{well_num}'.format(base_well=base_well_name, well_num=int(well_num))
+    if zero_pad:
+        well_name = '{}{:0>2}'.format(base_well_name, int(well_num))
+    return well_name
+
+
+
+def find_subdirectories_with_files_for_analysis(filename_format, pathname):
+    dirs = find_subdirectories(pathname)
+    _base_filename, filetype = os.path.splitext(filename_format)
+
+    cwd = str(Path().absolute())
+    paths_of_interest = list()
+    for directory in dirs:
+        abs_path = str(directory.absolute())
+        if abs_path == cwd:
+            continue
+        if 'work---' in abs_path:
+            continue
+        if 'logs---' in abs_path:
+            continue
+        if str(directory).startswith('raw_data'):
+            continue
+
+        paths_of_interest.append(abs_path)
+
+
+    dir_contents = OrderedDict()
+    for directory in paths_of_interest:
+        dir_contents[directory] = list()
+        for fname in os.listdir(directory):
+            path = str(Path(directory).joinpath(fname).absolute())
+            if path.endswith(filetype) and 'work---' not in path and 'logs---' not in path:
+                dir_contents[directory].append(path)
+
+    dirs_of_interest = OrderedDict()
+    for directory in sorted(dir_contents):
+        contents = dir_contents[directory]
+        if len(contents) > 0:
+            dirs_of_interest[directory] = contents
+
+    return dirs_of_interest
+
+
+def generate_wells_filename_from_directory_contents(directory_contents, savename):
+    # This expects that the wells_filename is empty.
+    data = OrderedDict()
+    data['well_file'] = list()
+    for filename in sorted(directory_contents):
+        fname = os.path.basename(filename)
+        base_name, extension = os.path.splitext(fname)
+        try:
+            padded_name = determine_well_name(fname, zero_pad=True)
+        except RuntimeError as e:
+            print(e)
+            continue
+        data['well_file'].append(padded_name)
+
+    dfo = OrderedDict(sorted(data.items()))
+    df = pd.DataFrame(dfo)
+    df.to_csv(savename, index=False)
+    return df
+
+
+
 # ---------------------------------------------------------------------------------------------------------------------
 # MANIOC utils
 
@@ -143,12 +222,12 @@ def read_manioc_config(config_filename):
             ln      = line[:index].strip()
             if len(ln) > 0:
                 cleaned_data.append(ln)
-    
+
     # In the second pass, populate the config based on the cleaned data.
     for line in cleaned_data:
         setting, option = line.split(':=')
         config[setting] = option
-    
+
     # Our faux config object is now populated and available for use.
     return config
 
@@ -156,7 +235,7 @@ def read_manioc_config(config_filename):
 def parse_manioc_timestamp(time_str):
     """Read an input string from MANIOC and extract the datetime from it. Useful for populating log files
     and other related house-keeping tasks.
-    
+
     @param time_str (str): The string that may contain a datetime string (in an ISO-like format). If
                            found, it will be extracted and converted to a datetime object which will
                            be returned.
@@ -176,16 +255,16 @@ def parse_manioc_timestamp(time_str):
         date_tuple      = match.groups()
         datetime_obj    = datetime.strptime('-'.join(date_tuple), '%Y-%m-%d-%H-%M-%S')
         parsed          = True
-    
+
     # Finally, return it.
-    return parsed, datetime_obj 
+    return parsed, datetime_obj
 
 
 def validate_manioc_directory_tree(pathname):
     """This function checks and verifies the existences of the `manioc.results` sub-directories as read from the
     input `manioc.config` filename. If the required sub-directories are not found, the program raises an error
     and exits.
-    
+
     @param pathname (str):              The directory whose contents will be examined and checked.
     @return paths_of_interest (list):   A list containing paths that are likely to contain data for subsequent
                                         analysis.
@@ -217,7 +296,7 @@ def validate_manioc_directory_tree(pathname):
 
     # Now check whether the tree from `raw_data` is populated in `manioc.results`
     # since if this is validated, it means that we can proceed with the analysis.
-    # Recall that MANIOC creates an exact duplicate of the directory tree under 
+    # Recall that MANIOC creates an exact duplicate of the directory tree under
     # `raw_data` but prepended with the `resultsDir` path from the MANIOC config.
     raw_data_dir    = required_subdirectories[raw_dir]
     relative_paths  = list()
@@ -231,7 +310,7 @@ def validate_manioc_directory_tree(pathname):
         if str_raw_data_dir != str_subdir and str_raw_data_dir in str_subdir:
             relative_path = os.path.relpath(subdir, raw_data_dir)
             relative_paths.append(relative_path)
-    
+
     paths_of_interest = list()
     for relative_path in relative_paths:
         manioc_results_path = manioc_results_root.joinpath(relative_path).resolve()
@@ -250,7 +329,7 @@ def determine_if_manioc_project(project_directory):
     """This function determines if a supplied path to a `project_directory` contains MANIOC output. This is done
     by checking for the existence of `'manioc.results'` and `'raw_data'` sub-directories. If these are present
     the directory is a MANIOC project.
-    
+
     @param project_directory (str): The name of the project directory to check.
     @return tuple:                  A 2-tuple corresponding to whether or not the directory has a MANIOC layout,
                                     and, a list of the immediate sub-directories located in the provided project
@@ -277,7 +356,7 @@ def determine_if_manioc_project(project_directory):
 
 
 def clamp_data(data, low_conc_cutoff, high_conc_cutoff):
-    """This function restricts the input `data` to be contained within the limits: 
+    """This function restricts the input `data` to be contained within the limits:
     `low_conc_cutoff` and `high_conc_cutoff`.
 
     @param data (pandas.DataFrame):     The raw input data yet to be histogrammed.
@@ -296,14 +375,14 @@ def clamp_data(data, low_conc_cutoff, high_conc_cutoff):
 def check_if_data_within_limits(data, low_conc_cutoff, high_conc_cutoff):
     """This function checks whether valid data exists within the limits provided. It uses the min
     and max of the raw concentration data (i.e. pre-clamped) as an back of the envelope check for
-    validity. This is necessary as data outside of these limits will be dropped, and the 
-    classification may not proceed, or in some cases be inaccuracte. It should be noted that minimum 
+    validity. This is necessary as data outside of these limits will be dropped, and the
+    classification may not proceed, or in some cases be inaccuracte. It should be noted that minimum
     concentration will be negative, but that's alright as the system is very noisy at low concentration.
 
     @param data (pandas.DataFrame):                 The raw input data yet to be histogrammed.
-    @param low_conc_cutoff (float):                 The lower cutoff limit. Values below this 
+    @param low_conc_cutoff (float):                 The lower cutoff limit. Values below this
                                                     will be dropped.
-    @param high_conc_cutoff (float):                The upper cutoff limit. Values above this 
+    @param high_conc_cutoff (float):                The upper cutoff limit. Values above this
                                                     will be dropped.
 
     @return valid (bool), min (float), max (float): Values corresponding to the check which could
@@ -317,7 +396,7 @@ def check_if_data_within_limits(data, low_conc_cutoff, high_conc_cutoff):
     valid = False
     if max_conc <= high_conc_cutoff and max_conc >= low_conc_cutoff:
         valid = True
-    
+
     return valid, min_conc, max_conc
 
 
@@ -349,13 +428,13 @@ def load_settings(yaml_filename):
 
 
 def read_original_data(filename, low_conc_cutoff, high_conc_cutoff, apply_cutoff=True):
-    """This is a convenience function will provides the user with the ability to load a given 
-    dataset and apply the cutoffs (`low_conc_cutoff` and `high_conc_cutoff`) according to the 
+    """This is a convenience function will provides the user with the ability to load a given
+    dataset and apply the cutoffs (`low_conc_cutoff` and `high_conc_cutoff`) according to the
     algorithm used.
     """
     data = pd.read_csv(filename, usecols=['Acceptor-A', 'FRET-A'])
     counts = len(data)  # Record the original number of points
-    
+
     df = pd.DataFrame()
     df['concentration'] = np.log10(data['Acceptor-A'])
     df['damfret'] = data['FRET-A']/data['Acceptor-A']
@@ -392,7 +471,7 @@ def remove_genes_and_replicates_below_count(genes_table, minimum_cell_count, con
                                             must have in order to be kept.
     @param construct_or_gene_column (str):  The column to use for selection. Can be either `gene` or
                                             `construct`.
-    @return tuple:                          A 2-tuple containing the truncated table, and a list 
+    @return tuple:                          A 2-tuple containing the truncated table, and a list
                                             containing the genes / constructs that were excluded.
 
     """
@@ -420,7 +499,7 @@ def validate_gene_replicates(genes_table, num_replicates, drop_extraneous=True, 
 
     @param genes_table (pandas.DataFrame):  A table containing the genes, replicates, and well files.
     @param num_replicates (int):            The number of replicates to validate against.
-    @param drop_extraneous (bool):          Whether or not to drop any replicates exceeding 
+    @param drop_extraneous (bool):          Whether or not to drop any replicates exceeding
                                             `num_replicates` (default = True).
     @param drop_if_fewer (bool):            Whether or not to drop genes if their replicates are
                                             less than the expected number `num_replicates` (default=True).
@@ -428,7 +507,7 @@ def validate_gene_replicates(genes_table, num_replicates, drop_extraneous=True, 
     """
     columns_order = 'construct,replicate,gene,well_file,plasmid,counts,AA_sequence'.split(',')
     table = genes_table.copy()
-    
+
     genes = set(table['gene'].to_numpy().tolist())
     counts = OrderedDict()
     droppable = list()
@@ -461,7 +540,7 @@ def validate_gene_replicates(genes_table, num_replicates, drop_extraneous=True, 
         truncated = pd.concat(truncatable)
         print('Some replicates were truncated. Those were saved to "truncated.tsv"...')
         truncated[columns_order].to_fwf('truncated.tsv')
-    
+
     message = list()
     header1 = '\nWarning: The following genes do not match the expected number ({}).'.format(num_replicates)
     message.append(header1)
@@ -469,7 +548,7 @@ def validate_gene_replicates(genes_table, num_replicates, drop_extraneous=True, 
     if drop_if_fewer:
         header2 = 'Genes with replicates < {r} were dropped.'.format(r=num_replicates)
         message.append(header2)
-    
+
     if drop_extraneous:
         header3 = 'Genes with replicates > {r} were truncated to {r}:'.format(r=num_replicates)
         message.append(header3)
@@ -485,11 +564,11 @@ def validate_gene_replicates(genes_table, num_replicates, drop_extraneous=True, 
 
 
 def create_genes_table(config, plasmid_csv_filename, savename):
-    """Given an input plasmid_csv filename and algorithm configuration, create a more comprehensive TSV dataset 
+    """Given an input plasmid_csv filename and algorithm configuration, create a more comprehensive TSV dataset
     for easier use. (TSVs are human and machine-readable.) This works by reading in the plasma well files and
     counting the number of cell measurements and adding that information to an extended table derived from the
     plasmid_csv. Other attributes are added such as the construct and replicate numbers. Those numbers should
-    not be used for comparison as they are not fixed. They are mainly used for improving readability and 
+    not be used for comparison as they are not fixed. They are mainly used for improving readability and
     consulting.
 
     @param config (Config):             A `Config` instance which contains all the parameters for the project.
@@ -527,7 +606,7 @@ def create_genes_table(config, plasmid_csv_filename, savename):
                 well            = int(well_file[1:])  # works for `A09` and `A9`
                 well_name       = '%s%d' % (well_file[0], well)  # reformat to match CSV data files name format.
                 data_filename   = os.path.join(config.data_dir, config.filename_format.format(well_name=well_name))
-            
+
             data        = pd.read_csv(data_filename)
             cell_counts = len(data)
 
@@ -535,7 +614,7 @@ def create_genes_table(config, plasmid_csv_filename, savename):
             constructs.append(construct)
             counts.append(cell_counts)
             replicate += 1
-        
+
         sel['replicate']    = replicates
         sel['construct']    = constructs
         sel['counts']       = counts
@@ -554,7 +633,7 @@ def create_genes_table(config, plasmid_csv_filename, savename):
 
 
 def start_process(session_name):
-    """This is just a notifier function to indicate that a worker process has been launched. 
+    """This is just a notifier function to indicate that a worker process has been launched.
     Since this is meant for a pool, the pool reuses these processes."""
     session_log = logging.getLogger(session_name)
     session_log.info('Starting :: {}'.format(mp.current_process().name))
@@ -566,7 +645,7 @@ def initialize_pool(num_processes, initializer_function, session_name):
     num_procs = num_processes
     if num_processes is None:
         num_procs = mp.cpu_count()
-    
+
     pool = mp.Pool(processes=num_procs, initializer=initializer_function, initargs=(session_name,))
     return pool
 
@@ -582,27 +661,27 @@ def parallelize(func, list_of_func_args, num_processes=None, session_name=None):
 
     @returns results (OrderedDict):     A dictionary of function arguments as keys, and
     a values of 2-tuples comprised of datetime instances and the function result. Note:
-    the result is a lazy reference to an `ApplyAsync` result. To extract the values, 
+    the result is a lazy reference to an `ApplyAsync` result. To extract the values,
     they can be obtained by calling `.get()` on the result.
 
     Notes: calling the `ApplyAsync` object's get (`result.get()`) here will block, which
     defeats the entire purpose behind this configuration.
     """
     pool = initialize_pool(num_processes, start_process, session_name)
-    
+
     results = OrderedDict()
     for func_args in list_of_func_args:
         async_result = pool.apply_async(func, args=func_args)
         start_time = datetime.now()
         func_result = (async_result, start_time)
         results[func_args] = func_result
-    
+
     pool.close()
     pool.join()
 
     # To obtain the results as they arrive, we need to use `AsyncResult.get()` - i.e.
     # `result.get()`. However, doing this in the processing loop will block and never
-    # yield performance increases above those using 1 CPU. So, to parallelize the 
+    # yield performance increases above those using 1 CPU. So, to parallelize the
     # results call, we do the `get()` after the pool has been closed and joined.
     actual_results = OrderedDict()
     for fargs in results:

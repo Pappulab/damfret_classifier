@@ -54,7 +54,7 @@ class Config(object):
         self.fine_grid_xlim     = kwargs.get('xlim_2d_histograms',              None)
         self.fine_grid_ylim     = kwargs.get('ylim_2d_histograms',              None)
         self.plot_type          = kwargs.get('plot_type',                       'png')
-        
+
         # Populated when `self._populate_bins_variables()` is called.
         self.num_conc_bins  = 0
         self.num_fret_bins  = 0
@@ -71,7 +71,7 @@ class Config(object):
 
 
     def _check_if_null(self, parameter):
-        """Used during validation as a number of parameters, mainly those which are auto-generated 
+        """Used during validation as a number of parameters, mainly those which are auto-generated
         using the provided limits (i.e. bins), should not be `None` (the default)."""
         value = getattr(self, parameter)
         if value is None:
@@ -115,7 +115,7 @@ class Config(object):
             if not path.exists():
                 message1 = 'Warning: {} path "{}" not found. This path will be created.'.format(default_name, path)
                 message2 = 'User-specified {} directory created: "{}".'.format(default_name, path)
-                
+
                 # `exist_ok = False` here mainly for preservation and minimizing issues
                 # with race conditions
                 path.mkdir(parents=True, exist_ok=False)  # generate an error if the directory already exists
@@ -135,11 +135,11 @@ class Config(object):
                 path = Path(Path.cwd(), name)
             else:
                 path = Path(self.project_dir, name)
-            
+
             message3 = 'Default {} directory created: "{}".'.format(default_name, path)
             try:
                 path.mkdir(parents=True, exist_ok=False)
-                
+
                 print(message3)
                 session_log.info(message3)
             except FileExistsError:
@@ -171,7 +171,7 @@ class Config(object):
         if fret_diff <= 0:
             raise RuntimeError('The `low_fret` cannot be >= `high_fret`.')
 
-    
+
     def _validate_nice_level(self):
         """Determine whether the nice level is valid."""
         if self.nice_level > 20 or self.nice_level < -20:
@@ -198,12 +198,12 @@ class Config(object):
 
         # Check for work and log paths existence. Create if not found.
         now_str = self._now_timestamp()
-        
+
         # This is an implicit else for both `if` conditions.
         self.work_dir = str(self._create_directory_if_not_exists(self.work_dir, 'work', now_str))
         self.logs_dir = str(self._create_directory_if_not_exists(self.logs_dir, 'logs', now_str))
 
-    
+
     def _validate_session_name(self):
         """Check the session name is non-empty and a string."""
         if self.session_name is None:
@@ -256,11 +256,11 @@ class Config(object):
         """Check whether or not the `wells_filename` is valid, and exists."""
         if self.wells_filename is None:
             raise RuntimeError('The `wells_filename` has not been set. Exiting.')
-        
+
         updated_path = Path(self.project_dir).joinpath(self.wells_filename).absolute()  # `project_dir` is already expanded here.
         if not updated_path.exists():
             raise RuntimeError('The `wells_filename` ("{}") does not exist under the project path: "{}". Exiting.'.format(
-                self.wells_filename, 
+                self.wells_filename,
                 self.project_dir
             ))
 
@@ -269,7 +269,7 @@ class Config(object):
 
         self.wells_filename = str(updated_path)
 
-    
+
     def _populate_bins_variables(self):
         """Using the set parameter values within the config object, define the `numpy` array which
         contains the limits for use in the classification algorithm."""
@@ -285,7 +285,7 @@ class Config(object):
     def _validate_config(self, yaml_config):
         """Set the values for the internal parameters of the config object
         based on those parsed / extracted from an input YAML object (usually
-        a dictionary). Finally, validate those values and auto-populate the 
+        a dictionary). Finally, validate those values and auto-populate the
         relevant variables where necessary."""
         c = yaml_config.copy()
 
@@ -313,7 +313,7 @@ class Config(object):
         self.logs_dir           = c['logs_directory']
         self.filename_format    = c['filename_format']
         self.wells_filename     = c['wells_filename']
-        
+
         # Plotting options
         self.plot_gaussian      = c['plot_gaussian_fits']
         self.plot_logistic      = c['plot_logistic_fits']
@@ -323,19 +323,19 @@ class Config(object):
         self.fine_grid_xlim     = c['xlim_2d_histogram']
         self.fine_grid_ylim     = c['ylim_2d_histogram']
         self.plot_type          = c['plot_type']
-        
+
         self._populate_bins_variables()
         self.validate()
 
 
     def load_config_from_settings(self, yaml_config):
-        """This is another convenience function which allows the population and validation of 
+        """This is another convenience function which allows the population and validation of
         the config object directly from a parsed YAML config (often a dictionary)."""
         self._validate_config(yaml_config)
 
 
     def load_config_from_file(self, settings_filename):
-        """This is a convenience function to allow the population and validation of the config 
+        """This is a convenience function to allow the population and validation of the config
         object using the path to an input YAML file."""
         yaml_config = load_settings(settings_filename)
         self._validate_config(yaml_config)
@@ -354,7 +354,7 @@ class Config(object):
 
         # Check / set the random variable (if Null).
         self._validate_random_seed()
-        
+
         # Check and validate the values / limits of the important variables.
         self._check_if_zero('min_measurements')
         self._check_if_zero('num_conc_bins')
@@ -385,11 +385,11 @@ class Config(object):
 
         # Apply a path fix for the `wells_filename` if a relative path is used.
         self._validate_wells_filename()
-        
+
         # Check for valid plot types.
         self._validate_plot_type()
 
-        
+
     def __repr__(self):
         """Generate a string representation of the object and its parameter values for debugging
         purposes. For e.g. if our `settings_filename` is `config.yaml` we can do:
@@ -428,7 +428,7 @@ class Config(object):
             else:
                 param_string = '{}={}'.format(param, value)
             params_and_values.append(param_string)
-        
+
         params_string = ', '.join(params_and_values)
         return 'Config({})'.format(params_string)
 
