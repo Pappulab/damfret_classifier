@@ -1,6 +1,7 @@
 # The name of this session. This variable is only used for the uniquely
 # identifying the log files when multiple datasets are analyzed at once,
-# as in a MANIOC directory layout. In such a layout, each subsequent
+# as in the case where individual runs / plates are saved as sub-directories
+# within the `project_directory` root. In such a layout, each subsequent
 # plate is appended with a numerical non-zero index which will specifically
 # identify the session internally.
 session_name: default

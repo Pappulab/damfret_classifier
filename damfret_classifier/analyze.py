@@ -17,7 +17,7 @@ from damfret_classifier.plotting import plot_gaussian_fits, plot_logistic_fits
 from damfret_classifier.plotting import plot_linear_rsquared_fit, plot_fine_grid_profiles
 from damfret_classifier.utils import load_settings, load_raw_synthetic_data, load_manuscript_classifications
 from damfret_classifier.utils import read_original_data, remove_genes_and_replicates_below_count
-from damfret_classifier.utils import apply_cutoff_to_dataframe, to_fwf, determine_if_manioc_project
+from damfret_classifier.utils import apply_cutoff_to_dataframe, to_fwf
 from damfret_classifier.utils import create_genes_table, clamp_data, check_if_data_within_limits
 from damfret_classifier.utils import initialize_pool, parallelize, determine_well_name
 
@@ -535,7 +535,7 @@ def _save_parameters(config, session_log, parameters):
 
 def _log_classification_summary(logger, parameters_df, class_name):
     """Output the well files found with a given phase transition class."""
-    if class_name.trim() == 'N/A':
+    if class_name.strip() == 'N/A':
         logger.info('Number of well files skipped: {}'.format(len(parameters_df)))
     else:
         logger.info('Number of well files identified with the class "{}": {}'.format(class_name, len(parameters_df)))
@@ -581,9 +581,7 @@ def _output_summary(session_log, wells_table, skipped, start_time):
 
 
 def _move_plots_to_project_root(config, session_log):
-    """Move all plots from the `work` directory to the `project_directory`. This always
-    occurs with MANIOC projects. For other projects, this function has to be called
-    explicitly."""
+    """Move all plots from the `work` directory to the `project_directory`."""
     session_log.info('')
     _insert_section_separator(session_log)
     session_log.info('')
@@ -847,7 +845,7 @@ def classify_dataset(config, raw_well_name):
 def classify_datasets(config_filename, move_to_project_root):
     """This is the main entry point for the classification of the datasets using
     a provided configuration file. This is so configured such that the user can
-    use the entry point for both MANIOC and non-MANIOC project directories.
+    use the entry point for any project directory structure.
 
     @param config_filename (str):       The location of the YAML config file which
                                         will be used when analyzing the data.

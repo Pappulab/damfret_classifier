@@ -15,9 +15,9 @@ from datetime import datetime
 from argparse import ArgumentParser
 from damfret_classifier.analyze import classify_datasets
 from damfret_classifier.config import Config
-from damfret_classifier.utils import generate_default_config, load_settings, determine_if_manioc_project
-from damfret_classifier.utils import validate_manioc_directory_tree
-from damfret_classifier.utils import generate_wells_filename_from_directory_contents, find_subdirectories_with_files_for_analysis
+from damfret_classifier.utils import generate_default_config, load_settings
+from damfret_classifier.utils import generate_wells_filename_from_directory_contents
+from damfret_classifier.utils import find_subdirectories_with_files_for_analysis
 
 
 script_description = (
@@ -108,7 +108,7 @@ def main():
 
 
 if __name__ == '__main__':
-    # register the signals to be caught
+    # Register the signals to be caught
     signal.signal(signal.SIGTSTP,   shutdown_not_suspend)   # Ctrl-Z
     signal.signal(signal.SIGINT,    shutdown)               # Ctrl-C
     main()
