@@ -195,6 +195,11 @@ plot_rsquared_fits: True
 plot_skipped_2d_histograms: True
 
 
+# Whether or not to move the plots from the `work` directory
+# into the `project_directory`.
+move_to_project_directory: True
+
+
 # Limits to use when plotting the 2d-histograms / profiles that were
 # not skipped.
 xlim_2d_histogram: [1.5, 4.5]

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+#
+# This script provides an interface that combines several functions from the `damfret_classifier` package
+# to quickly analyze DAmFRET datasets of interest.
 import os
 import sys
 import pandas as pd
@@ -44,7 +47,7 @@ def get_or_generate_random_seed(yaml_settings):
 
 
 def main():
-    parser = ArgumentParser('classify_damfret', description=script_description)
+    parser = ArgumentParser('damfret_classify', description=script_description)
     parser.add_argument('-c', '--config', help='The YAML config file to use (default `config.yaml`).', type=str, default='config.yaml')
     parser.add_argument('-g', '--generate-default-config', help='Generate a default YAML config file which can be adapted.', action='store_true')
     args = parser.parse_args()
@@ -56,26 +59,39 @@ def main():
         print('YAML config file generated and saved to: "{}". Exiting.'.format(path))
         sys.exit(0)
 
-    # Otherwise, we have two choices: analyze a MANIOC analysis or non-MANIOC dataset.
+    # Otherwise, we have to analyze the data according to the YAML config provided.
+    #
+    # First, determine if there sub-directories with data that should be analyzed.
     settings = load_settings(args.config)
-    directories_contents = find_subdirectories_with_files_for_analysis(settings['filename_format'], settings['project_directory'])
+    directories_contents = find_subdirectories_with_files_for_analysis(settings['project_directory'], settings['filename_format'])
 
+    # If we have several sub-directories, we should use the same random seed for
+    # all analyses. This is necessary in case the same plasmid is stored in different
+    # well files in different sub-directories. Having the same random seed allows
+    # for a consistent comparison.
     random_seed = get_or_generate_random_seed(settings)
     for index, directory in enumerate(directories_contents, start=1):
         new_settings = settings.copy()
-        new_settings['session_name'] = '{}_{}'.format(settings['session_name'], index)
-        new_settings['project_directory'] = directory
-        new_settings['random_seed'] = random_seed
+        new_settings['session_name']        = '{}_{}'.format(settings['session_name'], index)
+        new_settings['project_directory']   = directory
+        new_settings['random_seed']         = random_seed
 
+        # If the `settings['well_filename']` is None, that means we should populate that
+        # filename with a default whose contents are determined from examining the
+        # sub-directory in question.
+        #
+        # If that setting is not None, we copy over that file to the sub-directory.
+        # That file will then be consulted during analysis, hence we also populate
+        # the updated `well_filename` in the `new_settings`.
         new_wells_path = None
         if settings['wells_filename'] is None:
-            contents = directories_contents[directory]
-            new_wells_path = Path(directory).joinpath('wells.csv').absolute()
+            contents        = directories_contents[directory]
+            new_wells_path  = Path(directory).joinpath('wells.csv').absolute()
             generate_wells_filename_from_directory_contents(contents, new_wells_path)
             new_settings['wells_filename'] = str(new_wells_path)
         else:
-            wells_path = Path(settings['wells_filename']).absolute()
-            new_wells_path = Path(directory).joinpath(settings['wells_filename']).absolute()
+            wells_path      = Path(settings['wells_filename']).absolute()
+            new_wells_path  = Path(directory).joinpath(settings['wells_filename']).absolute()
             shutil.copyfile(wells_path, new_wells_path)
 
         # Output the new config, and copy over the plasmid table. Doing this simplifies the development
@@ -87,8 +103,8 @@ def main():
 
         # Ready to begin analysis. This design is preferred as it allows a single
         # entry point for different project layouts.
-        print('Analyzing MANIOC Output ({} / {})'.format(index, len(directories_contents)))
-        classify_datasets(project_settings_filename, move_to_project_root=True)
+        print('Analyzing Sub-directory ({} / {})'.format(index, len(directories_contents)))
+        classify_datasets(project_settings_filename, settings['move_to_project_directory'])
 
 
 if __name__ == '__main__':

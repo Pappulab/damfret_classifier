@@ -1,6 +1,6 @@
 # Overview
 
-This Python package provides code and script to aid in the use and development of a supervised learning algorithm to classify DAmFRET data by mechanistic inferences.
+This Python package provides code and script to aid in the use and development of a supervised learning algorithm to classify DAmFRET data by mechanistic inferences. This package is currently in pre-production release, hence please use with caution.
 
 
 # Citation

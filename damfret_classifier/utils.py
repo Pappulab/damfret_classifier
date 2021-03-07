@@ -19,7 +19,8 @@ __all__ = ['load_raw_synthetic_data', 'load_manuscript_classifications', 'create
            'create_genes_table', 'start_process', 'initialize_pool', 'parallelize', 'generate_default_config', 'to_fwf',
            'clamp_data', 'find_subdirectories', 'read_manioc_config', 'validate_manioc_directory_tree',
            'check_if_data_within_limits', 'parse_manioc_timestamp', 'determine_if_manioc_project', 'determine_well_name',
-           'generate_wells_filename_from_directory_contents', 'find_subdirectories_with_files_for_analysis']
+           'generate_wells_filename_from_directory_contents', 'find_subdirectories_with_files_for_analysis',
+           'export_raw_synthetic_data']
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -40,7 +41,8 @@ pd.DataFrame.to_fwf = to_fwf
 
 
 def load_raw_synthetic_data():
-    """This function loads the raw synthetic data referenced in the DAmFRET manuscript.
+    """This function loads the raw synthetic data referenced in the DAmFRET manuscript as a
+    `pandas.DataFrame()` object.
 
     @return synthetic_data: an `OrderedDict` containing the raw synthetic data.
                             Keys are short names. Values are 2-tuples. The first
@@ -54,6 +56,37 @@ def load_raw_synthetic_data():
     synthetic_data_bytes = pkgutil.get_data('damfret_classifier', 'synthetic.npy')
     synthetic_data = np.load(io.BytesIO(synthetic_data_bytes), allow_pickle=True).item()
     return synthetic_data
+
+
+def export_raw_synthetic_data(savepath, extension):
+    """This function loads and exports the raw synthetic data used within the DAmFRET manuscript
+    into individual files / "wells", the format of which depends on the extension requested.
+    
+    @param savepath (str):  The location where to save the exported synthetic data.
+    @param extension (str): The extension to use when exporting the filenames of the synthetic data.
+    @return None
+    """
+    allowed = 'txt,dat,tsv,csv,ascii,xlsx'.split(',')
+    allowed_for_tsv = 'txt,dat,ascii'.split(',')
+    if extension not in allowed:
+        raise RuntimeError('Extension not supported for exporting. Please use one of: {}.'.format(allowed))
+
+    synthetic_data = load_raw_synthetic_data()
+    total_datasets = len(synthetic_data)
+    absolute_savepath = Path(savepath).absolute()
+    for index, dataset in enumerate(synthetic_data, start=1):
+        data_savepath = os.path.join(absolute_savepath, '{dataset}.{ext}'.format(dataset=dataset, ext=extension))
+        df, _original_name = synthetic_data[dataset]
+
+        if extension in allowed_for_tsv:
+            to_fwf(df, data_savepath)
+        elif extension == 'csv':
+            df.to_csv(data_savepath)
+        elif extension == 'xls' or extension == 'xlsx':
+            df.to_excel(data_savepath)
+        else:
+            raise RuntimeError('Extension not supported.')
+        print('Export of synthetic dataset ({:0>3d} / {}): "{}" complete.'.format(index, total_datasets, data_savepath))
 
 
 def load_manuscript_classifications():
@@ -128,10 +161,46 @@ def determine_well_name(raw_well_name, zero_pad=False):
 
 
 
-def find_subdirectories_with_files_for_analysis(filename_format, pathname):
+def find_subdirectories_with_files_for_analysis(pathname, filename_format):
+    """This function examines a given path `pathname` to determine if there
+    are subdirectories which contain data for analysis. Each sub-directory 
+    will be configured as an individual session and analyzed accordingly.
+
+    Relative paths can be used - e.g. `'.'`. Note that in such an instance
+    if there are data files with the same extension as contained in
+    `filename_format`, and even if the files have the typical wells filename
+    naming scheme, those files will not be included. Only sub-directories
+    from the path provided will be enumerated.
+
+    This function should be run before 
+    `generate_wells_filename_from_directory_contents`, and can be considered
+    as its companion function.
+
+    @param pathname (str):          The location of the directory to analyze.
+                                    Relative paths such `'.'` are also
+                                    supported.
+
+    @param filename_format (str):   The `filename_format` of the individual
+                                    wells. Typically this parameter should
+                                    be populated from `filename_format`
+                                    from the YAML config.
+
+    @return OrderedDict:            An `OrderedDict` in which the keys
+                                    are the absolute path names of the
+                                    sub-directories containing files that
+                                    match the `filename_format`. The
+                                    corresponding values are lists 
+                                    containing the absolute paths of 
+                                    files within that sub-directory.
+    """
     dirs = find_subdirectories(pathname)
     _base_filename, filetype = os.path.splitext(filename_format)
 
+    # Screen the names of the sub-directories found to ensure that we
+    # don't examine those from previous analysis runs as indicated
+    # by the presence of `work` and `logs`. We exclude any directory
+    # which contains `raw_data` within the immediate sub-directory
+    # as those files have not yet been gated.
     cwd = str(Path().absolute())
     paths_of_interest = list()
     for directory in dirs:
@@ -144,10 +213,18 @@ def find_subdirectories_with_files_for_analysis(filename_format, pathname):
             continue
         if str(directory).startswith('raw_data'):
             continue
-
         paths_of_interest.append(abs_path)
 
-
+    # Next, we examine each sub-directory of interest and identify
+    # which files have the same extension as the input `filename_format`
+    # (usually matches that of `filename_format` from the YAML config).
+    #
+    # If these subdirectories contain files with the same extension
+    # as the `filename_format` they are kept, but will ultimately be
+    # excluded in the companion function to this one 
+    # (`generate_wells_filename_from_directory_contents`) as they will
+    # not match the known naming format for wells (see: 
+    # `determine_well_name`).
     dir_contents = OrderedDict()
     for directory in paths_of_interest:
         dir_contents[directory] = list()
@@ -156,6 +233,8 @@ def find_subdirectories_with_files_for_analysis(filename_format, pathname):
             if path.endswith(filetype) and 'work---' not in path and 'logs---' not in path:
                 dir_contents[directory].append(path)
 
+    # Finally, we whittle the contents to only include the locations
+    # that are non-empty (according to the criteria above).
     dirs_of_interest = OrderedDict()
     for directory in sorted(dir_contents):
         contents = dir_contents[directory]
@@ -166,15 +245,44 @@ def find_subdirectories_with_files_for_analysis(filename_format, pathname):
 
 
 def generate_wells_filename_from_directory_contents(directory_contents, savename):
+    """This function is used to examine the contents collected from the post-search and
+    analysis of a provided directory tree (i.e. `project_directory` in the config). Then,
+    it saves and returns those contents in a more convenient format that can be used for
+    additional processing or book-keeping.
+
+    By default, the directory contents are formatted as a `pandas.DataFrame` object and
+    saved to the provided `savename`.
+
+    This function use is meant to accompany `find_subdirectories_with_files_for_analysis`.
+
+    @param directory_contents (list):   This list contains the processed contents derived
+                                        from `find_subdirectories_with_files_for_analysis`.
+
+    @param savename (str):              The savepath to write the reformatted contents 
+                                        (`pandas.DataFrame`) out to.
+
+    @return pandas.DataFrame:           A `pandas.DataFrame` object which contains the
+                                        directory contents (usually well files) in a
+                                        convenient, zero-padded, and sorted manner. The
+                                        only column in the DataFrame is `well_file`.
+
+    The purpose of this design is such that in cases where multiple runs are stored under
+    an input `project_directory` root, there may be different wells. By having identifying 
+    which sub-directories have wells files for analysis via 
+    `find_subdirectories_with_files_for_analysis`, those locations can then be processed
+    with this function. Hence, individual `wells_filename` can be determined and the
+    analysis can proceed as expected.
+    """
     # This expects that the wells_filename is empty.
     data = OrderedDict()
     data['well_file'] = list()
     for filename in sorted(directory_contents):
         fname = os.path.basename(filename)
-        base_name, extension = os.path.splitext(fname)
+        base_name, _extension = os.path.splitext(fname)
         try:
-            padded_name = determine_well_name(fname, zero_pad=True)
+            padded_name = determine_well_name(base_name, zero_pad=True)
         except RuntimeError as e:
+            print('Excluding file which does not match the known format of well filenames: "{}".'.format(filename))
             print(e)
             continue
         data['well_file'].append(padded_name)
@@ -183,7 +291,6 @@ def generate_wells_filename_from_directory_contents(directory_contents, savename
     df = pd.DataFrame(dfo)
     df.to_csv(savename, index=False)
     return df
-
 
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -376,7 +483,7 @@ def check_if_data_within_limits(data, low_conc_cutoff, high_conc_cutoff):
     """This function checks whether valid data exists within the limits provided. It uses the min
     and max of the raw concentration data (i.e. pre-clamped) as an back of the envelope check for
     validity. This is necessary as data outside of these limits will be dropped, and the
-    classification may not proceed, or in some cases be inaccuracte. It should be noted that minimum
+    classification may not proceed, or in some cases be inaccurate. It should be noted that minimum
     concentration will be negative, but that's alright as the system is very noisy at low concentration.
 
     @param data (pandas.DataFrame):                 The raw input data yet to be histogrammed.

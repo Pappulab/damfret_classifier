@@ -44,6 +44,7 @@ class Config(object):
         self.logs_dir           = kwargs.get('logs_directory',                  None)
         self.filename_format    = kwargs.get('filename_format',                 None)
         self.wells_filename     = kwargs.get('wells_filename',                  None)
+        self.move_to_pdir       = kwargs.get('move_to_project_directory',       None)
 
         # Plotting
         self.plot_gaussian      = kwargs.get('plot_gaussian_fits',              False)
@@ -190,7 +191,8 @@ class Config(object):
 
 
     def _validate_directories(self):
-        """Check for the existence of the `work` and `logs` directories. Create if not found."""
+        """Check for the existence of the `project_directory` as well as the `work` and `logs` directories.
+        Create the latter two if not found."""
         if self.project_dir is None:
             raise RuntimeError('No `project_directory` has been supplied in the settings. Exiting.')
         else:
@@ -250,6 +252,14 @@ class Config(object):
         if not path.is_dir():
             raise RuntimeError('The path supplied for `project_directory` is not a directory. Exiting.')
         self.project_dir = str(path)
+
+
+    def _validate_move_to_pdir(self):
+        """Determine whether the option to move the generated plots into the `project_directory` after
+        analysis is valid."""
+        mtype = type(self.move_to_pdir)
+        if mtype is not bool:
+            raise RuntimeError('The `move_to_project_directory` cannot be `{}`. Please use a boolean value.'.format(mtype))
 
 
     def _validate_wells_filename(self):
@@ -313,6 +323,7 @@ class Config(object):
         self.logs_dir           = c['logs_directory']
         self.filename_format    = c['filename_format']
         self.wells_filename     = c['wells_filename']
+        self.move_to_pdir       = c['move_to_project_directory']
 
         # Plotting options
         self.plot_gaussian      = c['plot_gaussian_fits']
@@ -346,8 +357,11 @@ class Config(object):
         # Validate the session name
         self._validate_session_name()
 
-        # Check for project, work, and log directories. Create work and log if not found.
+        # Check for project, work, and logs directories. Create work and log if not found.
         self._validate_directories()
+
+        # Check whether moving to the `project_directory` is valid.
+        self._validate_move_to_pdir()
 
         # Check the conc and fret limits.
         self._validate_limits()
@@ -410,7 +424,7 @@ class Config(object):
         params = 'settings_filename,session_name,random_seed,num_processes,nice_level'.split(',')
         params += 'low_conc,high_conc,low_fret,high_fret'.split(',')
         params += 'low_conc_cutoff,high_conc_cutoff,conc_bin_width,fret_bin_width'.split(',')
-        params += 'number_of_bins_xy,min_measurements'.split(',')
+        params += 'number_of_bins_xy,min_measurements,move_to_pdir'.split(',')
         params += 'project_dir,work_dir,logs_dir,filename_format,wells_filename'.split(',')
         params += 'plot_gaussian,plot_logistic,plot_fine_grids,plot_rsquared'.split(',')
         params += 'plot_skipped,fine_grid_xlim,fine_grid_ylim,plot_type'.split(',')

@@ -322,20 +322,26 @@ def _log_class_and_score(logger, well_file, color, score):
     logger.info(message2)
 
 
-def _log_skipped_analysis(logger, well_file, low_conc, high_conc, min_conc, max_conc):
+def _log_skipped_analysis(logger, well_file):
     """Indicate to the user why the provided well file was skipped for analysis due to it having
     data that exceeded the provided concentration range. Such well files are saved to `skipped.{TSV,CSV}`."""
     message1 = 'Skipped :: well file "{}" exceeds the defined concentration limits.'.format(well_file)
-    message2 = 'Input concentration limits: ({}, {})'.format(low_conc, high_conc)
-    message3 = 'Actual concentration limits: ({}, {})'.format(min_conc, max_conc)
-    message4 = 'This file will not be analyzed and marked with zeroes & N/A in the final parameter file.'
-    message5 = 'Processing complete for well file "{}"'.format(well_file)
+    message2 = 'This file will not be analyzed and marked with zeroes & N/A in the final parameter file.'
+    message3 = 'Processing complete for well file "{}"'.format(well_file)
     logger.info(message1)
     logger.info(message2)
     logger.info(message3)
-    logger.info(message4)
-    logger.info(message5)
 
+
+def _log_concentration_limits(logger, well_file, low_conc_cutoff, high_conc_cutoff, min_conc, max_conc):
+    """Indicate to the user why the provided well file was skipped for analysis due to it having
+    data that exceeded the provided concentration range. Such well files are saved to `skipped.{TSV,CSV}`."""
+    message1 = 'Concentration limits for: "{}"'.format(well_file)
+    message2 = 'Cutoff concentration limits: ({}, {})'.format(low_conc_cutoff, high_conc_cutoff)
+    message3 = 'Actual concentration limits: ({}, {})'.format(min_conc, max_conc)
+    logger.info(message1)
+    logger.info(message2)
+    logger.info(message3)
 
 
 def _configure_logger(logs_dir, session_name, raw_well_name, attach_stream_handler):
@@ -453,7 +459,7 @@ def _insert_analysis_summary_section(session_log):
     session_log.info('')
     _insert_section_separator(session_log)
     session_log.info('')
-    session_log.info('SUMMARY')
+    session_log.info('SUMMARIES')
     session_log.info('')
 
 
@@ -464,7 +470,6 @@ def _save_parameters_and_skipped_wells(config, session_log, wells_table, results
     not all columns are populated. The `skipped` files are truncated versions of the
     input `wells_filename` as defined in the config."""
 
-    # check for which wells were skipped.
     parameter_fields = (
         'gene construct replicate well_file counts mean_fret gauss2_loc ' \
         'csat csat_slope linear_r2 max_gauss_r2 min_r2_region max_r2_region ' \
@@ -477,6 +482,7 @@ def _save_parameters_and_skipped_wells(config, session_log, wells_table, results
     for field in fields:
         parameters[field] = list()
 
+    # Determine which wells were skipped.
     skipped = list()
     for fargs in results:
         raw_well_file = fargs[1]
@@ -496,7 +502,8 @@ def _save_parameters_and_skipped_wells(config, session_log, wells_table, results
     if len(skipped_dfs) > 0:
         _save_skipped_wells(config, session_log, skipped_dfs)
     _save_parameters(config, session_log, parameters)
-    return parameters, skipped
+    parameters_df = pd.DataFrame(parameters)
+    return parameters_df, skipped
 
 
 def _save_skipped_wells(config, session_log, skipped_dfs):
@@ -510,6 +517,7 @@ def _save_skipped_wells(config, session_log, skipped_dfs):
     skipped_df.to_csv(skipped_savepath_csv, index=False)
     session_log.info('Skipped well files exported as: "{}"'.format(skipped_savepath_tsv))
     session_log.info('Skipped well files exported as: "{}"'.format(skipped_savepath_csv))
+    session_log.info('')
 
 
 def _save_parameters(config, session_log, parameters):
@@ -525,6 +533,34 @@ def _save_parameters(config, session_log, parameters):
     session_log.info('')
 
 
+def _log_classification_summary(logger, parameters_df, class_name):
+    """Output the well files found with a given phase transition class."""
+    if class_name.trim() == 'N/A':
+        logger.info('Number of well files skipped: {}'.format(len(parameters_df)))
+    else:
+        logger.info('Number of well files identified with the class "{}": {}'.format(class_name, len(parameters_df)))
+    logger.info('')
+    for _index, row in parameters_df.iterrows():
+        message = '{} : {}'.format(row['well_file'], row['score'])
+        logger.info(message)
+    logger.info('')
+
+
+def _output_classifications_summary(logger, parameters_df):
+    """Identify the unique 'colors' / 'classes' in the parameters `DataFrame` and output the
+    wells that match that criterion."""
+    colors = parameters_df['color'].to_numpy().tolist()
+    unique_colors = list(sorted(set(colors)))
+    logger.info('')
+    logger.info('CLASSIFICATIONS SUMMARY')
+    logger.info('')
+    logger.info('<Well File> : <Confidence Score>')
+    logger.info('')
+    for color in unique_colors:
+        df = parameters_df[parameters_df['color'] == color].dropna()
+        _log_classification_summary(logger, df, color)
+
+
 def _output_summary(session_log, wells_table, skipped, start_time):
     """Summarize and output the analysis performed."""
     total_wells         = len(wells_table['well_file'])
@@ -533,6 +569,7 @@ def _output_summary(session_log, wells_table, skipped, start_time):
     stop_time           = datetime.now()
     processing_time     = stop_time - start_time
 
+    session_log.info('SUMMARY OVERVIEW')
     session_log.info('')
     session_log.info('Number of wells to analyze:       {}'.format(total_wells))
     session_log.info('Number of wells analyzed:         {}'.format(analyzed_wells))
@@ -619,32 +656,37 @@ def classify_dataset(config, raw_well_name):
     if not os.path.exists(well_file):
         _log_skipped_file_not_found(session, well_file)
         _log_skipped_file_not_found(logger, well_file)
-        params.well_file = well_name
+        params.well_file = raw_well_name
         return params
 
     # Next, check to determine if this file has enough cell measurements for analysis (as limited by the
     # Shannon entropy) due to the input grid size.
     raw_data, raw_counts = read_original_data(well_file, config.low_conc_cutoff, config.high_conc_cutoff, apply_cutoff=False)
     if raw_counts < config.min_measurements:
-        _plot_skipped_well_file(config, raw_data, well_name)
+        _plot_skipped_well_file(config, raw_data, raw_well_name)
         _log_skipped_cell_measurements(session, well_file, config.min_measurements, raw_counts)
         _log_skipped_cell_measurements(logger, well_file, config.min_measurements, raw_counts)
-        params.well_file = well_name
+        params.well_file = raw_well_name
         return params
 
     # Next, check if the file is within the data limits:
     valid, min_conc, max_conc = check_if_data_within_limits(raw_data, config.low_conc_cutoff, config.high_conc_cutoff)
+
+    # But first, log the concentration limits
+    _log_concentration_limits(session, well_file, config.low_conc_cutoff, config.high_conc_cutoff, min_conc, max_conc)
+    _log_concentration_limits(logger, well_file, config.low_conc_cutoff, config.high_conc_cutoff, min_conc, max_conc)
+    
     if not valid:
-        _plot_skipped_well_file(config, raw_data, well_name)
-        _log_skipped_analysis(session, well_file, config.low_conc, config.high_conc, min_conc, max_conc)
-        _log_skipped_analysis(logger, well_file, config.low_conc, config.high_conc, min_conc, max_conc)
-        params.well_file = well_name
+        _plot_skipped_well_file(config, raw_data, raw_well_name)
+        _log_skipped_analysis(session, well_file)
+        _log_skipped_analysis(logger, well_file)
+        params.well_file = raw_well_name
         return params
 
     # At this point, we can continue
     data, counts        = apply_cutoff_to_dataframe(raw_data, config.low_conc_cutoff, config.high_conc_cutoff)
     params.counts       = counts
-    params.well_file    = well_name
+    params.well_file    = raw_well_name
 
     # remove extreme concentration values
     data = clamp_data(data, config.low_conc_cutoff, config.high_conc_cutoff)
@@ -654,7 +696,7 @@ def classify_dataset(config, raw_well_name):
     if config.plot_fine_grids:
         plot_params = dict()
         plot_params['savepath']         = config.work_dir
-        plot_params['well_name']        = well_name
+        plot_params['well_name']        = raw_well_name
         plot_params['fg_conc_edges']    = config.fg_conc_edges
         plot_params['fg_fret_edges']    = config.fg_fret_edges
         plot_params['data_df']          = data
@@ -677,7 +719,7 @@ def classify_dataset(config, raw_well_name):
     # area under both Gaussians. Systems with specific nucleation profiles have unique
     # nucleation patterns.
     params.gauss2_loc = average
-    nucleated_fractions, conc_bin_centers, r_squared = calculate_nucleated_fractions(config, well_name, slices_histograms, average)
+    nucleated_fractions, conc_bin_centers, r_squared = calculate_nucleated_fractions(config, raw_well_name, slices_histograms, average)
 
     # We also save the quality of fit of the double Gaussians.
     # Since the location of the second Gaussian (i.e. the max of the concentration averages) is
@@ -699,7 +741,7 @@ def classify_dataset(config, raw_well_name):
         plot_params['conc_bin_centers'] = conc_bin_centers
         plot_params['r_squared']        = r_squared
         plot_params['linear_func_data'] = linear_func_data
-        plot_params['well_name']        = well_name
+        plot_params['well_name']        = raw_well_name
         plot_params['r']                = linear_rsquared
         plot_params['popt']             = popt
         plot_params['plot_type']        = config.plot_type
@@ -727,7 +769,7 @@ def classify_dataset(config, raw_well_name):
     if config.plot_logistic:
         plot_params = dict()
         plot_params['savepath']             = config.work_dir
-        plot_params['well_name']            = well_name
+        plot_params['well_name']            = raw_well_name
         plot_params['conc_bin_centers']     = conc_bin_centers
         plot_params['nucleated_fractions']  = nucleated_fractions
         plot_params['logistic_y']           = logistic_y
@@ -802,7 +844,7 @@ def classify_dataset(config, raw_well_name):
     return params
 
 
-def classify_datasets(config_filename, move_to_project_root=False):
+def classify_datasets(config_filename, move_to_project_root):
     """This is the main entry point for the classification of the datasets using
     a provided configuration file. This is so configured such that the user can
     use the entry point for both MANIOC and non-MANIOC project directories.
@@ -812,9 +854,6 @@ def classify_datasets(config_filename, move_to_project_root=False):
 
     @param move_to_project_root (bool): Whether or not to move the plots from
                                         the `work_dir` to the `project_directory`.
-                                        This is only required for MANIOC project
-                                        layouts. However, it can be requested by
-                                        the user if so inclined.
 
     @return None
 
@@ -824,7 +863,7 @@ def classify_datasets(config_filename, move_to_project_root=False):
     `skipped.{tsv,csv}` file which is a truncated version of `wells_filename` that
     contains all the wells which were skipped during the analysis. All plots are
     either stored in the `work` directory by default, or in the `project_directory`
-    if requested by setting `move_to_project_root=True` when calling this function.
+    if requested by setting `move_to_project_root` to `True` when calling this function.
     """
     start_time  = datetime.now()
     config      = Config(config_filename)
@@ -851,7 +890,9 @@ def classify_datasets(config_filename, move_to_project_root=False):
 
     # Reformat and save the parameters and skipped wells (if any).
     _insert_analysis_summary_section(session_log)
-    _parameters, skipped = _save_parameters_and_skipped_wells(config, session_log, wells_table, results)
+    parameters, skipped = _save_parameters_and_skipped_wells(config, session_log, wells_table, results)
+    _insert_section_separator(session_log)
+    _output_classifications_summary(session_log, parameters)
     _insert_section_separator(session_log)
     _output_summary(session_log, wells_table, skipped, start_time)
 
