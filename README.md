@@ -87,7 +87,7 @@ Using the [full experimental dataset from the DAmFRET manuscript](https://www.st
 
 ## TSV Comparator
 
-Sometimes it is necessary to compare different runs and their resulting `parameters.tsv` (and CSV) files. The script `tsv-comparator` provides an easy interface to quickly introspect and compare such runs, e.g. cases where different random seeds were employed in the analysis of the same dataset. This comes in handy when testing and developing different 
+Sometimes it is necessary to compare different runs and their resulting `parameters.tsv` (and CSV) files. The script `tsv-comparator` provides an easy interface to quickly introspect and compare such runs, e.g. cases where different random seeds were employed in the analysis of the same dataset. This tool also comes in handy when testing and developing different classification schemes based on the extracted parameters.
 
 
 # API Usage
