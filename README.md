@@ -82,7 +82,7 @@ df = pd.read_csv(filename, sep='\\s+')  # i.e. use multiple spaces as our separa
 
 ### Estimated Runtime
 
-Using the [full experimental dataset from the DAmFRET manuscript](https://www.stowers.org/research/publications/libpb-1594), which is comprised of 380 well files (i.e. roughly 1 plate), an analysis takes ~ 2.65 minutes using 16 processes (Xeon W5580) if all intermediate plots are generated. This translates to an average of about ~ 6.7 seconds per well file / process. Your runtime may vary depending on your hardware configuration.
+Using the [full experimental dataset from the DAmFRET manuscript](https://www.stowers.org/research/publications/libpb-1594), which is comprised of 380 well files (i.e. roughly 1 plate), an analysis run could take ~ 2.65 minutes using 16 processes (Xeon W5580) if all intermediate plots are generated. This translates to an average of about ~ 6.7 seconds per well file / process. Your runtime may vary depending on your hardware configuration.
 
 
 ## TSV Comparator
